@@ -1,0 +1,9 @@
+language: go
+go:
+  - 1.1
+  - tip
+
+install:
+  - go get -v github.com/remogatto/prettytest
+  - go get -v ./...
+  - go build -v ./...
