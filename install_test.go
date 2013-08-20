@@ -37,12 +37,16 @@ func init() {
 
 	var err error
 
-	fakeRepoPath, err = filepath.Abs(path.Join(currentDirectory, "fake_install_repo"))
+	fakeRepoPath, err = filepath.Abs(
+		path.Join(currentDirectory, "fixtures", "fake_install_repo"),
+	)
 	if err != nil {
 		panic(err)
 	}
 
-	fakeRepoWithRevisionPath, err = filepath.Abs(path.Join(currentDirectory, "fake_install_repo_with_revision"))
+	fakeRepoWithRevisionPath, err = filepath.Abs(
+		path.Join(currentDirectory, "fixtures", "fake_install_repo_with_revision"),
+	)
 	if err != nil {
 		panic(err)
 	}
