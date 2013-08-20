@@ -64,6 +64,16 @@ func main() {
 						if err != nil {
 							log.Fatal(err)
 						}
+
+						gopath, err := gocart.InstallationDirectory(os.Getenv("GOPATH"))
+						if err != nil {
+							log.Fatal(err)
+						}
+
+						err = dep.Checkout(gopath)
+						if err != nil {
+							log.Fatal(err)
+						}
 					}
 				}
 			},
