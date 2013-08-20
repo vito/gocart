@@ -29,7 +29,9 @@ func TestRunnerInstall(t *testing.T) {
 	)
 }
 
-var currentDirectory, fakeRepoPath, fakeRepoWithRevisionPath string
+var currentDirectory,
+	fakeGitRepoPath, fakeGitRepoWithRevisionPath,
+	fakeBzrRepoPath, fakeBzrRepoWithRevisionPath string
 
 func init() {
 	_, currentFile, _, _ := runtime.Caller(0)
@@ -37,15 +39,29 @@ func init() {
 
 	var err error
 
-	fakeRepoPath, err = filepath.Abs(
-		path.Join(currentDirectory, "fixtures", "fake_install_repo"),
+	fakeGitRepoPath, err = filepath.Abs(
+		path.Join(currentDirectory, "fixtures", "fake_git_repo"),
 	)
 	if err != nil {
 		panic(err)
 	}
 
-	fakeRepoWithRevisionPath, err = filepath.Abs(
-		path.Join(currentDirectory, "fixtures", "fake_install_repo_with_revision"),
+	fakeGitRepoWithRevisionPath, err = filepath.Abs(
+		path.Join(currentDirectory, "fixtures", "fake_git_repo_with_revision"),
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	fakeBzrRepoPath, err = filepath.Abs(
+		path.Join(currentDirectory, "fixtures", "fake_bzr_repo"),
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	fakeBzrRepoWithRevisionPath, err = filepath.Abs(
+		path.Join(currentDirectory, "fixtures", "fake_bzr_repo_with_revision"),
 	)
 	if err != nil {
 		panic(err)
@@ -69,7 +85,7 @@ func (s *InstallSuite) BeforeEach() {
 
 	s.Install = exec.Command(mainExecutable.Name(), "install")
 
-	gopath, err := ioutil.TempDir(os.TempDir(), "fake_install_repo_GOPATH")
+	gopath, err := ioutil.TempDir(os.TempDir(), "fake_git_repo_GOPATH")
 	s.Nil(err)
 
 	s.Install.Env = []string{
@@ -81,8 +97,8 @@ func (s *InstallSuite) BeforeEach() {
 	s.GOPATH = gopath
 }
 
-func (s *InstallSuite) TestInstallWithoutLockFileDownloadsDependencies() {
-	s.Install.Dir = fakeRepoPath
+func (s *InstallSuite) TestInstallWithoutLockFileDownloadsGitDependencies() {
+	s.Install.Dir = fakeGitRepoPath
 
 	dependencyPath := path.Join(s.GOPATH, "src", "github.com", "xoebus", "gocart")
 
@@ -98,8 +114,8 @@ func (s *InstallSuite) TestInstallWithoutLockFileDownloadsDependencies() {
 	s.Path(dependencyPath)
 }
 
-func (s *InstallSuite) TestInstallWithoutLockFileChecksOutRevision() {
-	s.Install.Dir = fakeRepoWithRevisionPath
+func (s *InstallSuite) TestInstallWithoutLockFileChecksOutGitRevision() {
+	s.Install.Dir = fakeGitRepoWithRevisionPath
 
 	dependencyPath := path.Join(s.GOPATH, "src", "github.com", "xoebus", "gocart")
 
@@ -112,8 +128,40 @@ func (s *InstallSuite) TestInstallWithoutLockFileChecksOutRevision() {
 
 	s.Equal(
 		s.gitRevision(dependencyPath, "HEAD"),
-		s.gitRevision(dependencyPath, "7c9d1a95d4b7979bc4180d4cb4aebfc036f276de"),
+		"7c9d1a95d4b7979bc4180d4cb4aebfc036f276de",
 	)
+}
+
+func (s *InstallSuite) TestInstallWithoutLockFileDownloadsBzrDependencies() {
+	s.Install.Dir = fakeBzrRepoPath
+
+	dependencyPath := path.Join(s.GOPATH, "src", "launchpad.net", "gocheck")
+
+	s.Not(s.Path(dependencyPath))
+
+	out, err := s.Install.CombinedOutput()
+	if err != nil {
+		fmt.Printf("%s\n", out)
+	}
+
+	s.Nil(err)
+
+	s.Path(dependencyPath)
+}
+
+func (s *InstallSuite) TestInstallWithoutLockFileChecksOutBzrRevision() {
+	s.Install.Dir = fakeBzrRepoWithRevisionPath
+
+	dependencyPath := path.Join(s.GOPATH, "src", "launchpad.net", "gocheck")
+
+	out, err := s.Install.CombinedOutput()
+	if err != nil {
+		fmt.Printf("%s\n", out)
+	}
+
+	s.Nil(err)
+
+	s.Equal(s.bzrRevision(dependencyPath), "1")
 }
 
 func (s *InstallSuite) TestInstallWithLockFile() {
@@ -124,6 +172,18 @@ func (s *InstallSuite) gitRevision(path, rev string) string {
 	git.Dir = path
 
 	out, err := git.CombinedOutput()
+	if err != nil {
+		s.Error(err)
+	}
+
+	return strings.Trim(string(out), "\n")
+}
+
+func (s *InstallSuite) bzrRevision(path string) string {
+	bzr := exec.Command("bzr", "revno", "--tree")
+	bzr.Dir = path
+
+	out, err := bzr.CombinedOutput()
 	if err != nil {
 		s.Error(err)
 	}

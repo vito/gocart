@@ -48,32 +48,30 @@ func main() {
 						continue
 					}
 
-					dependency := dependencyList.FindStringSubmatch(line)
-					if dependency == nil {
+					dependencyLine := dependencyList.FindStringSubmatch(line)
+					if dependencyLine == nil {
 						message := fmt.Sprintf("malformed line: %s", line)
 						log.Fatalln(message)
 					}
 
-					if dependencyList.MatchString(line) {
-						dep := &gocart.Dependency{
-							Path:    dependency[1],
-							Version: dependency[2],
-						}
+					dependency := &gocart.Dependency{
+						Path:    dependencyLine[1],
+						Version: dependencyLine[2],
+					}
 
-						err := dep.Get()
-						if err != nil {
-							log.Fatal(err)
-						}
+					err = dependency.Get()
+					if err != nil {
+						log.Fatal(err)
+					}
 
-						gopath, err := gocart.InstallationDirectory(os.Getenv("GOPATH"))
-						if err != nil {
-							log.Fatal(err)
-						}
+					gopath, err := gocart.InstallationDirectory(os.Getenv("GOPATH"))
+					if err != nil {
+						log.Fatal(err)
+					}
 
-						err = dep.Checkout(gopath)
-						if err != nil {
-							log.Fatal(err)
-						}
+					err = dependency.Checkout(gopath)
+					if err != nil {
+						log.Fatal(err)
 					}
 				}
 			},
