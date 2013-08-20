@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"strings"
 )
 
 var UnknownDependencyType = errors.New("unknown dependency type")
@@ -16,11 +17,15 @@ type Dependency struct {
 }
 
 func (d Dependency) String() string {
-	return fmt.Sprintf("%s (%s)", d.Path, d.Version)
+	return fmt.Sprintf("%s\t%s", d.Path, d.Version)
 }
 
 func (d Dependency) Get() error {
-	return exec.Command("go", "get", "-u", "-d", "-v", d.Path).Run()
+	get := exec.Command("go", "get", "-u", "-d", "-v", d.Path)
+	get.Stdout = os.Stdout
+	get.Stderr = os.Stderr
+	get.Stdin = os.Stdin
+	return get.Run()
 }
 
 func (d Dependency) Checkout(gopath string) error {
@@ -46,13 +51,47 @@ func (d Dependency) Checkout(gopath string) error {
 
 	checkout.Dir = repoPath
 
-	out, err := checkout.CombinedOutput()
+	checkout.Stdout = os.Stdout
+	checkout.Stderr = os.Stderr
+	checkout.Stdin = os.Stdin
+
+	err := checkout.Run()
 	if err != nil {
-		fmt.Printf("output:\n%s\n", out)
 		return err
 	}
 
 	return nil
+}
+
+func (d Dependency) CurrentVersion(gopath string) (string, error) {
+	repoPath := d.fullPath(gopath)
+
+	var version *exec.Cmd
+
+	if findDirectory(repoPath, ".hg") {
+		version = exec.Command("hg", "id", "-i")
+	}
+
+	if findDirectory(repoPath, ".git") {
+		version = exec.Command("git", "rev-parse", "HEAD")
+	}
+
+	if findDirectory(repoPath, ".bzr") {
+		version = exec.Command("bzr", "revno", "--tree")
+	}
+
+	if version == nil {
+		return "", UnknownDependencyType
+	}
+
+	version.Dir = repoPath
+
+	out, err := version.CombinedOutput()
+	if err != nil {
+		return "", err
+	}
+
+	return strings.Trim(string(out), "\n"), nil
 }
 
 func (d Dependency) fullPath(gopath string) string {

@@ -1,20 +1,15 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 	"log"
 	"os"
-	"regexp"
 
 	"github.com/codegangsta/cli"
 
 	"github.com/xoebus/gocart"
 )
-
-var skippableLine *regexp.Regexp = regexp.MustCompile(`^\s*(#.*)?\s*$`)
-var dependencyList *regexp.Regexp = regexp.MustCompile(`^\s*([^\s]+)\s+([^\s]+)\s*$`)
 
 func main() {
 	app := cli.NewApp()
@@ -29,50 +24,30 @@ func main() {
 			Action: func(c *cli.Context) {
 				fmt.Println("Installing dependencies...")
 
-				file, err := os.Open("Cartridge")
+				cartridge, err := os.Open("Cartridge")
 				if err != nil {
 					log.Fatal(err)
 				}
 
-				bufferedReader := bufio.NewReader(file)
-				for {
-					line, err := bufferedReader.ReadString('\n')
+				dependencies, err := gocart.ParseDependencies(cartridge)
+				if err != nil {
+					log.Fatal(err)
+				}
 
-					if err == io.EOF {
-						break
-					} else if err != nil {
-						log.Fatal(err)
-					}
+				err = installDependencies(dependencies)
+				if err != nil {
+					log.Fatal(err)
+				}
 
-					if skippableLine.MatchString(line) {
-						continue
-					}
+				file, err := os.Create("Cartridge.lock")
+				if err != nil {
+					log.Fatal(err)
+				}
+				defer file.Close()
 
-					dependencyLine := dependencyList.FindStringSubmatch(line)
-					if dependencyLine == nil {
-						message := fmt.Sprintf("malformed line: %s", line)
-						log.Fatalln(message)
-					}
-
-					dependency := &gocart.Dependency{
-						Path:    dependencyLine[1],
-						Version: dependencyLine[2],
-					}
-
-					err = dependency.Get()
-					if err != nil {
-						log.Fatal(err)
-					}
-
-					gopath, err := gocart.InstallationDirectory(os.Getenv("GOPATH"))
-					if err != nil {
-						log.Fatal(err)
-					}
-
-					err = dependency.Checkout(gopath)
-					if err != nil {
-						log.Fatal(err)
-					}
+				err = updateLockFile(file, dependencies)
+				if err != nil {
+					log.Fatal(err)
 				}
 			},
 		},
@@ -87,4 +62,43 @@ func main() {
 	}
 
 	app.Run(os.Args)
+}
+
+func installDependencies(dependencies []gocart.Dependency) error {
+	for _, dependency := range dependencies {
+		err := dependency.Get()
+		if err != nil {
+			return err
+		}
+
+		gopath, err := gocart.InstallationDirectory(os.Getenv("GOPATH"))
+		if err != nil {
+			return err
+		}
+
+		err = dependency.Checkout(gopath)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func updateLockFile(writer io.Writer, dependencies []gocart.Dependency) error {
+	for _, dependency := range dependencies {
+		gopath, err := gocart.InstallationDirectory(os.Getenv("GOPATH"))
+		if err != nil {
+			return err
+		}
+
+		version, err := dependency.CurrentVersion(gopath)
+		if err != nil {
+			return err
+		}
+
+		writer.Write([]byte(fmt.Sprintf("%s\t%s\n", dependency.Path, version)))
+	}
+
+	return nil
 }

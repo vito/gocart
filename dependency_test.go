@@ -23,7 +23,7 @@ func (s *DependencySuite) TestString() {
 		Path:    "github.com/xoebus/kingpin",
 		Version: "master",
 	}
-	s.Equal(dependency.String(), "github.com/xoebus/kingpin (master)")
+	s.Equal(dependency.String(), "github.com/xoebus/kingpin\tmaster")
 }
 
 func (s *DependencySuite) TestFullPath() {
