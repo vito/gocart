@@ -17,6 +17,8 @@ import (
 type InstallSuite struct {
 	prettytest.Suite
 
+	mainExecutable *os.File
+
 	Install *exec.Cmd
 	GOPATH  string
 }
@@ -31,6 +33,7 @@ func TestRunnerInstall(t *testing.T) {
 
 var currentDirectory,
 	fakeGitRepoPath, fakeGitRepoWithRevisionPath,
+	fakeHgRepoPath, fakeHgRepoWithRevisionPath,
 	fakeBzrRepoPath, fakeBzrRepoWithRevisionPath string
 
 func init() {
@@ -66,26 +69,42 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+
+	fakeHgRepoPath, err = filepath.Abs(
+		path.Join(currentDirectory, "fixtures", "fake_hg_repo"),
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	fakeHgRepoWithRevisionPath, err = filepath.Abs(
+		path.Join(currentDirectory, "fixtures", "fake_hg_repo_with_revision"),
+	)
+	if err != nil {
+		panic(err)
+	}
 }
 
-func (s *InstallSuite) BeforeEach() {
+func (s *InstallSuite) BeforeAll() {
 	mainPath, err := filepath.Abs(path.Join(currentDirectory, "gocart/main.go"))
 	s.Nil(err)
 
-	mainExecutable, err := ioutil.TempFile(os.TempDir(), "gocart_test_main")
+	s.mainExecutable, err = ioutil.TempFile(os.TempDir(), "gocart_test_main")
 	s.Nil(err)
 
-	install := exec.Command("go", "build", "-o", mainExecutable.Name(), mainPath)
+	install := exec.Command("go", "build", "-o", s.mainExecutable.Name(), mainPath)
 	out, err := install.CombinedOutput()
 	if err != nil {
 		println(string(out))
 	}
 
 	s.Nil(err)
+}
 
-	s.Install = exec.Command(mainExecutable.Name(), "install")
+func (s *InstallSuite) BeforeEach() {
+	s.Install = exec.Command(s.mainExecutable.Name(), "install")
 
-	gopath, err := ioutil.TempDir(os.TempDir(), "fake_git_repo_GOPATH")
+	gopath, err := ioutil.TempDir(os.TempDir(), "fake_repo_GOPATH")
 	s.Nil(err)
 
 	s.Install.Env = []string{
@@ -164,6 +183,38 @@ func (s *InstallSuite) TestInstallWithoutLockFileChecksOutBzrRevision() {
 	s.Equal(s.bzrRevision(dependencyPath), "1")
 }
 
+func (s *InstallSuite) TestInstallWithoutLockFileDownloadsHgDependencies() {
+	s.Install.Dir = fakeHgRepoPath
+
+	dependencyPath := path.Join(s.GOPATH, "src", "code.google.com", "p", "go.crypto", "ssh")
+
+	s.Not(s.Path(dependencyPath))
+
+	out, err := s.Install.CombinedOutput()
+	if err != nil {
+		fmt.Printf("%s\n", out)
+	}
+
+	s.Nil(err)
+
+	s.Path(dependencyPath)
+}
+
+func (s *InstallSuite) TestInstallWithoutLockFileChecksOutHgRevision() {
+	s.Install.Dir = fakeHgRepoWithRevisionPath
+
+	dependencyPath := path.Join(s.GOPATH, "src", "code.google.com", "p", "go.crypto", "ssh")
+
+	out, err := s.Install.CombinedOutput()
+	if err != nil {
+		fmt.Printf("%s\n", out)
+	}
+
+	s.Nil(err)
+
+	s.Equal(s.hgRevision(dependencyPath), "1e7a3e301825")
+}
+
 func (s *InstallSuite) TestInstallWithLockFile() {
 }
 
@@ -184,6 +235,18 @@ func (s *InstallSuite) bzrRevision(path string) string {
 	bzr.Dir = path
 
 	out, err := bzr.CombinedOutput()
+	if err != nil {
+		s.Error(err)
+	}
+
+	return strings.Trim(string(out), "\n")
+}
+
+func (s *InstallSuite) hgRevision(path string) string {
+	hg := exec.Command("hg", "id", "-i")
+	hg.Dir = path
+
+	out, err := hg.CombinedOutput()
 	if err != nil {
 		s.Error(err)
 	}

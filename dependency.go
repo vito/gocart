@@ -1,11 +1,14 @@
 package gocart
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"path"
 )
+
+var UnknownDependencyType = errors.New("unknown dependency type")
 
 type Dependency struct {
 	Path    string
@@ -25,17 +28,20 @@ func (d Dependency) Checkout(gopath string) error {
 
 	var checkout *exec.Cmd
 
-	if _, err := os.Stat(path.Join(repoPath, ".git")); err == nil {
+	if findDirectory(repoPath, ".hg") {
+		checkout = exec.Command("hg", "update", "-c", d.Version)
+	}
+
+	if findDirectory(repoPath, ".git") {
 		checkout = exec.Command("git", "checkout", d.Version)
 	}
 
-	if _, err := os.Stat(path.Join(repoPath, ".bzr")); err == nil {
+	if findDirectory(repoPath, ".bzr") {
 		checkout = exec.Command("bzr", "update", "-r", d.Version)
 	}
 
 	if checkout == nil {
-		// TODO
-		panic("unknown repo lol")
+		return UnknownDependencyType
 	}
 
 	checkout.Dir = repoPath
@@ -51,4 +57,17 @@ func (d Dependency) Checkout(gopath string) error {
 
 func (d Dependency) fullPath(gopath string) string {
 	return path.Join(gopath, "src", d.Path)
+}
+
+func findDirectory(root, dir string) bool {
+	if root == "/" {
+		return false
+	}
+
+	_, err := os.Stat(path.Join(root, dir))
+	if err == nil {
+		return true
+	}
+
+	return findDirectory(path.Dir(root), dir)
 }
