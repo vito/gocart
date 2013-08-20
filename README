@@ -1,0 +1,26 @@
+
+             ______________________________________________ 
+    _______________________ __________________ _________  /_
+       _______________  __ `/  __ \  ___/  __ `/_  ___/  __/
+           __________  /_/ // /_/ / /__ / /_/ /_  /   / /_
+     ________________\__, / \____/\___/ \__,_/ /_/    \__/
+        ____________/____/
+
+                        A Go Package Manager
+                 
+
+= gocart install
+
+    for package in Godeps
+        go get -u <uri>
+        vcs checkout <ref>
+    end
+
+= gocart update
+
+    for package in Godeps
+        go get -u <uri>
+        update NewGodeps
+    end
+
+    mv NewGoDeps Godeps
