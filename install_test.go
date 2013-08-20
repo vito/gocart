@@ -1,6 +1,7 @@
 package gocart
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -8,8 +9,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"testing"
-
-	. "launchpad.net/gocheck"
 
 	"github.com/remogatto/prettytest"
 )
@@ -55,7 +54,11 @@ func (s *InstallSuite) BeforeEach() {
 	gopath, err := ioutil.TempDir(os.TempDir(), "fake_install_repo_GOPATH")
 	s.Nil(err)
 
-	s.Install.Env = []string{"GOPATH=" + gopath}
+	s.Install.Env = []string{
+		"GOPATH=" + gopath,
+		"GOROOT=" + os.Getenv("GOROOT"),
+		"PATH=" + os.Getenv("PATH"),
+	}
 
 	s.Install.Dir = fakeRepoPath
 
@@ -65,12 +68,10 @@ func (s *InstallSuite) BeforeEach() {
 func (s *InstallSuite) TestInstallWithoutLockFile() {
 	out, err := s.Install.CombinedOutput()
 	if err != nil {
-		println(string(out))
+		fmt.Printf("%s\n", out)
 	}
 
 	s.Nil(err)
-
-	s.Check(string(out), Matches, "Installing dependencies...\n")
 
 	s.Path(path.Join(s.GOPATH, "src", "github.com", "xoebus", "gocart"))
 }

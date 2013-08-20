@@ -15,5 +15,5 @@ func (d Dependency) String() string {
 }
 
 func (d Dependency) Get() error {
-	return exec.Command("go", "get", "-u", "-d", d.Path).Run()
+	return exec.Command("go", "get", "-u", "-d", "-v", d.Path).Run()
 }
