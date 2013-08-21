@@ -11,6 +11,9 @@ import (
 	"github.com/xoebus/gocart"
 )
 
+const CartridgeFile = "Cartridge"
+const CartridgeLockFile = "Cartridge.lock"
+
 func main() {
 	app := cli.NewApp()
 	app.Name = "gocart"
@@ -24,7 +27,15 @@ func main() {
 			Action: func(c *cli.Context) {
 				fmt.Println("Installing dependencies...")
 
-				cartridge, err := os.Open("Cartridge")
+				var cartridge *os.File
+				var err error
+
+				if _, err := os.Stat(CartridgeLockFile); err == nil {
+					cartridge, err = os.Open(CartridgeLockFile)
+				} else {
+					cartridge, err = os.Open(CartridgeFile)
+				}
+
 				if err != nil {
 					log.Fatal(err)
 				}

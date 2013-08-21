@@ -32,6 +32,7 @@ func TestRunnerInstall(t *testing.T) {
 
 var currentDirectory,
 	fakeDiverseRepoPath,
+	fakeLockedGitRepoPath,
 	fakeGitRepoPath, fakeGitRepoWithRevisionPath,
 	fakeHgRepoPath, fakeHgRepoWithRevisionPath,
 	fakeBzrRepoPath, fakeBzrRepoWithRevisionPath string
@@ -44,6 +45,13 @@ func init() {
 
 	fakeDiverseRepoPath, err = filepath.Abs(
 		path.Join(currentDirectory, "fixtures", "fake_diverse_repo"),
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	fakeLockedGitRepoPath, err = filepath.Abs(
+		path.Join(currentDirectory, "fixtures", "fake_git_repo_locked"),
 	)
 	if err != nil {
 		panic(err)
@@ -254,7 +262,18 @@ func (s *InstallSuite) TestInstallWithoutLockFileGeneratesLockFile() {
 	})
 }
 
-func (s *InstallSuite) TestInstallWithLockFile() {
+func (s *InstallSuite) TestInstallWithLockFileInstallsLockedVersions() {
+	s.Install.Dir = fakeLockedGitRepoPath
+
+	dependencyPath := path.Join(s.GOPATH, "src", "github.com", "xoebus", "gocart")
+
+	err := s.Install.Run()
+	s.Nil(err)
+
+	s.Equal(
+		s.gitRevision(dependencyPath, "HEAD"),
+		"7c9d1a95d4b7979bc4180d4cb4aebfc036f276de",
+	)
 }
 
 func (s *InstallSuite) gitRevision(path, rev string) string {
