@@ -5,5 +5,7 @@ go:
 
 install:
   - go get -v github.com/remogatto/prettytest
+  - go get -v github.com/onsi/gomega
+  - go get -v github.com/onsi/ginkgo
   - go get -v ./...
   - go build -v ./...
