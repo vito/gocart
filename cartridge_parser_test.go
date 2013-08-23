@@ -2,46 +2,42 @@ package gocart
 
 import (
 	"bytes"
-	"testing"
-
-	"github.com/remogatto/prettytest"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
-type CartridgeParserSuite struct {
-	prettytest.Suite
-}
-
-func TestRunnerCartridgeParser(t *testing.T) {
-	prettytest.RunWithFormatter(
-		t,
-		new(prettytest.TDDFormatter),
-		new(CartridgeParserSuite),
+var _ = Describe("Parsing cartridges", func() {
+	var (
+		cartridge    *bytes.Buffer
+		dependencies []Dependency
+		err          error
 	)
-}
 
-func (s *CartridgeParserSuite) TestParsingDependencies() {
-	cartridge := bytes.NewBuffer([]byte(`
+	BeforeEach(func() {
+		cartridge = bytes.NewBuffer([]byte(`
 foo.com/bar master
 
 # i'm a pretty comment
 fizz.buzz/foo last:1`))
 
-	dependencies, err := ParseDependencies(cartridge)
-	s.Nil(err)
-
-	s.Equal(len(dependencies), 2)
-
-	if len(dependencies) != 2 {
-		return
-	}
-
-	s.Equal(dependencies[0], Dependency{
-		Path:    "foo.com/bar",
-		Version: "master",
+		dependencies, err = ParseDependencies(cartridge)
 	})
 
-	s.Equal(dependencies[1], Dependency{
-		Path:    "fizz.buzz/foo",
-		Version: "last:1",
+	It("parses without error", func() {
+		Expect(err).NotTo(HaveOccured())
 	})
-}
+
+	It("has the correct number of dependencies", func() {
+		Expect(dependencies).To(HaveLen(2))
+
+		Expect(dependencies[0]).To(Equal(Dependency{
+			Path:    "foo.com/bar",
+			Version: "master",
+		}))
+
+		Expect(dependencies[1]).To(Equal(Dependency{
+			Path:    "fizz.buzz/foo",
+			Version: "last:1",
+		}))
+	})
+})

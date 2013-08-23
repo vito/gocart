@@ -3,3 +3,5 @@ github.com/codegangsta/cli			master
 
 # Testing
 github.com/remogatto/prettytest		master
+github.com/onsi/ginkgo              master
+github.com/onsi/gomega              master

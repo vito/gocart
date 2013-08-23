@@ -1,2 +1,4 @@
 github.com/codegangsta/cli	16d10cc127e28110987a7b0bd692bbe53f549925
 github.com/remogatto/prettytest	88ee801f2f4ca1382a93990365270881001df309
+github.com/onsi/ginkgo	cfd6b07da4e69326bbd6b7057bbb4693cb78577b
+github.com/onsi/gomega	df693a19db56a8be867dbd5caad8c2741e2a55c1

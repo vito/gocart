@@ -1,36 +1,31 @@
 package gocart
 
 import (
-	"testing"
-
-	"github.com/remogatto/prettytest"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
-type GoPathSuite struct {
-	prettytest.Suite
-}
+var _ = Describe("GOPATH parsing", func() {
+	Context("when the GOPATH is empty", func() {
+		It("raises an error", func() {
+			_, err := InstallationDirectory("")
+			Expect(err).To(Equal(GoPathNotSet))
+		})
+	})
 
-func TestRunnerGoPath(t *testing.T) {
-	prettytest.RunWithFormatter(
-		t,
-		new(prettytest.TDDFormatter),
-		new(GoPathSuite),
-	)
-}
+	Context("when the GOPATH has a single element", func() {
+		It("returns that single element", func() {
+			path, err := InstallationDirectory("/it/is/a/real/path/honest")
+			Expect(err).NotTo(HaveOccured())
+			Expect(path).To(Equal("/it/is/a/real/path/honest"))
+		})
+	})
 
-func (s *GoPathSuite) TestEmptyGoPath() {
-	_, err := InstallationDirectory("")
-	s.Equal(err, GoPathNotSet)
-}
-
-func (s *GoPathSuite) TestGoPathWithOneElement() {
-	path, err := InstallationDirectory("/it/is/a/real/path/honest")
-	s.Nil(err)
-	s.Equal(path, "/it/is/a/real/path/honest")
-}
-
-func (s *GoPathSuite) TestGoPathWithManyElements() {
-	path, err := InstallationDirectory("/this/is/a/real/path/too:/it/is/a/real/path/honest")
-	s.Nil(err)
-	s.Equal(path, "/this/is/a/real/path/too")
-}
+	Context("when the GOPATH has many elements", func() {
+		It("returns the first element", func() {
+			path, err := InstallationDirectory("/this/is/a/real/path/too:/it/is/a/real/path/honest")
+			Expect(err).NotTo(HaveOccured())
+			Expect(path).To(Equal("/this/is/a/real/path/too"))
+		})
+	})
+})

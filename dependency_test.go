@@ -1,35 +1,29 @@
 package gocart
 
 import (
-	"testing"
-
-	"github.com/remogatto/prettytest"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
-type DependencySuite struct {
-	prettytest.Suite
-}
+var _ = Describe("Dependency", func() {
+	var dependency Dependency
 
-func TestRunnerDependency(t *testing.T) {
-	prettytest.RunWithFormatter(
-		t,
-		new(prettytest.TDDFormatter),
-		new(DependencySuite),
-	)
-}
+	BeforeEach(func() {
+		dependency = Dependency{
+			Path:    "github.com/xoebus/kingpin",
+			Version: "master",
+		}
+	})
 
-func (s *DependencySuite) TestString() {
-	dependency := Dependency{
-		Path:    "github.com/xoebus/kingpin",
-		Version: "master",
-	}
-	s.Equal(dependency.String(), "github.com/xoebus/kingpin\tmaster")
-}
+	Describe("Stringer interface", func() {
+		It("returns the string as it would appear in a Cartridge", func() {
+			Expect(dependency.String()).To(Equal("github.com/xoebus/kingpin\tmaster"))
+		})
+	})
 
-func (s *DependencySuite) TestFullPath() {
-	dependency := Dependency{
-		Path:    "github.com/xoebus/kingpin",
-		Version: "master",
-	}
-	s.Equal(dependency.fullPath("/tmp"), "/tmp/src/github.com/xoebus/kingpin")
-}
+	Describe("the full path of the dependency", func() {
+		It("prepends the passed in root path", func() {
+			Expect(dependency.fullPath("/tmp")).To(Equal("/tmp/src/github.com/xoebus/kingpin"))
+		})
+	})
+})
