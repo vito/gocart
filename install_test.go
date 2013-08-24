@@ -34,66 +34,94 @@ var currentDirectory,
 	fakeDiverseRepoPath,
 	fakeLockedGitRepoPath,
 	fakeGitRepoPath, fakeGitRepoWithRevisionPath,
+	fakeLockedGitRepoWithNewDepPath,
+	fakeLockedGitRepoWithRemovedDepPath,
 	fakeHgRepoPath, fakeHgRepoWithRevisionPath,
 	fakeBzrRepoPath, fakeBzrRepoWithRevisionPath string
 
+func walkTheDinosaur(src, dest string) error {
+	cp := exec.Command("cp", "-r", src+"/", dest)
+	return cp.Run()
+}
+
 func init() {
+	var err error
+
 	_, currentFile, _, _ := runtime.Caller(0)
 	currentDirectory = path.Dir(currentFile)
 
-	var err error
+	destTmpDir, err := ioutil.TempDir(os.TempDir(), "wtf")
+	if err != nil {
+		panic(err)
+	}
+
+	walkTheDinosaur(currentDirectory, destTmpDir)
 
 	fakeDiverseRepoPath, err = filepath.Abs(
-		path.Join(currentDirectory, "fixtures", "fake_diverse_repo"),
+		path.Join(destTmpDir, "fixtures", "fake_diverse_repo"),
 	)
 	if err != nil {
 		panic(err)
 	}
 
 	fakeLockedGitRepoPath, err = filepath.Abs(
-		path.Join(currentDirectory, "fixtures", "fake_git_repo_locked"),
+		path.Join(destTmpDir, "fixtures", "fake_git_repo_locked"),
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	fakeLockedGitRepoWithNewDepPath, err = filepath.Abs(
+		path.Join(destTmpDir, "fixtures", "fake_git_repo_locked_with_new_dep"),
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	fakeLockedGitRepoWithRemovedDepPath, err = filepath.Abs(
+		path.Join(destTmpDir, "fixtures", "fake_git_repo_locked_with_removed_dep"),
 	)
 	if err != nil {
 		panic(err)
 	}
 
 	fakeGitRepoPath, err = filepath.Abs(
-		path.Join(currentDirectory, "fixtures", "fake_git_repo"),
+		path.Join(destTmpDir, "fixtures", "fake_git_repo"),
 	)
 	if err != nil {
 		panic(err)
 	}
 
 	fakeGitRepoWithRevisionPath, err = filepath.Abs(
-		path.Join(currentDirectory, "fixtures", "fake_git_repo_with_revision"),
+		path.Join(destTmpDir, "fixtures", "fake_git_repo_with_revision"),
 	)
 	if err != nil {
 		panic(err)
 	}
 
 	fakeBzrRepoPath, err = filepath.Abs(
-		path.Join(currentDirectory, "fixtures", "fake_bzr_repo"),
+		path.Join(destTmpDir, "fixtures", "fake_bzr_repo"),
 	)
 	if err != nil {
 		panic(err)
 	}
 
 	fakeBzrRepoWithRevisionPath, err = filepath.Abs(
-		path.Join(currentDirectory, "fixtures", "fake_bzr_repo_with_revision"),
+		path.Join(destTmpDir, "fixtures", "fake_bzr_repo_with_revision"),
 	)
 	if err != nil {
 		panic(err)
 	}
 
 	fakeHgRepoPath, err = filepath.Abs(
-		path.Join(currentDirectory, "fixtures", "fake_hg_repo"),
+		path.Join(destTmpDir, "fixtures", "fake_hg_repo"),
 	)
 	if err != nil {
 		panic(err)
 	}
 
 	fakeHgRepoWithRevisionPath, err = filepath.Abs(
-		path.Join(currentDirectory, "fixtures", "fake_hg_repo_with_revision"),
+		path.Join(destTmpDir, "fixtures", "fake_hg_repo_with_revision"),
 	)
 	if err != nil {
 		panic(err)
@@ -101,7 +129,7 @@ func init() {
 }
 
 func (s *InstallSuite) BeforeAll() {
-	mainPath, err := filepath.Abs(path.Join(currentDirectory, "gocart/main.go"))
+	mainPath, err := filepath.Abs(path.Join(currentDirectory, "gocart", "main.go"))
 	s.Nil(err)
 
 	s.mainExecutable, err = ioutil.TempFile(os.TempDir(), "gocart_test_main")
@@ -136,8 +164,6 @@ func (s *InstallSuite) BeforeEach() {
 }
 
 func (s *InstallSuite) TestInstallWithoutLockFileDownloadsGitDependencies() {
-	defer s.cleanupLock()
-
 	s.Install.Dir = fakeGitRepoPath
 
 	dependencyPath := path.Join(s.GOPATH, "src", "github.com", "xoebus", "gocart")
@@ -151,8 +177,6 @@ func (s *InstallSuite) TestInstallWithoutLockFileDownloadsGitDependencies() {
 }
 
 func (s *InstallSuite) TestInstallWithoutLockFileChecksOutGitRevision() {
-	defer s.cleanupLock()
-
 	s.Install.Dir = fakeGitRepoWithRevisionPath
 
 	dependencyPath := path.Join(s.GOPATH, "src", "github.com", "xoebus", "gocart")
@@ -167,8 +191,6 @@ func (s *InstallSuite) TestInstallWithoutLockFileChecksOutGitRevision() {
 }
 
 func (s *InstallSuite) TestInstallWithoutLockFileDownloadsBzrDependencies() {
-	defer s.cleanupLock()
-
 	s.Install.Dir = fakeBzrRepoPath
 
 	dependencyPath := path.Join(s.GOPATH, "src", "launchpad.net", "gocheck")
@@ -182,8 +204,6 @@ func (s *InstallSuite) TestInstallWithoutLockFileDownloadsBzrDependencies() {
 }
 
 func (s *InstallSuite) TestInstallWithoutLockFileChecksOutBzrRevision() {
-	defer s.cleanupLock()
-
 	s.Install.Dir = fakeBzrRepoWithRevisionPath
 
 	dependencyPath := path.Join(s.GOPATH, "src", "launchpad.net", "gocheck")
@@ -195,8 +215,6 @@ func (s *InstallSuite) TestInstallWithoutLockFileChecksOutBzrRevision() {
 }
 
 func (s *InstallSuite) TestInstallWithoutLockFileDownloadsHgDependencies() {
-	defer s.cleanupLock()
-
 	s.Install.Dir = fakeHgRepoPath
 
 	dependencyPath := path.Join(s.GOPATH, "src", "code.google.com", "p", "go.crypto", "ssh")
@@ -210,8 +228,6 @@ func (s *InstallSuite) TestInstallWithoutLockFileDownloadsHgDependencies() {
 }
 
 func (s *InstallSuite) TestInstallWithoutLockFileChecksOutHgRevision() {
-	defer s.cleanupLock()
-
 	s.Install.Dir = fakeHgRepoWithRevisionPath
 
 	dependencyPath := path.Join(s.GOPATH, "src", "code.google.com", "p", "go.crypto", "ssh")
@@ -223,8 +239,6 @@ func (s *InstallSuite) TestInstallWithoutLockFileChecksOutHgRevision() {
 }
 
 func (s *InstallSuite) TestInstallWithoutLockFileGeneratesLockFile() {
-	defer s.cleanupLock()
-
 	s.Install.Dir = fakeDiverseRepoPath
 
 	err := s.Install.Run()
@@ -276,6 +290,49 @@ func (s *InstallSuite) TestInstallWithLockFileInstallsLockedVersions() {
 	)
 }
 
+func (s *InstallSuite) TestInstallWithLockFileWithNewDependencies() {
+	s.Install.Dir = fakeLockedGitRepoWithNewDepPath
+
+	dependencyPath := path.Join(s.GOPATH, "src", "github.com", "onsi", "ginkgo")
+
+	err := s.Install.Run()
+	s.Nil(err)
+
+	s.Equal(
+		s.gitRevision(dependencyPath, "HEAD"),
+		"cfd6b07da4e69326bbd6b7057bbb4693cb78577b",
+	)
+
+	lockFilePath := path.Join(s.Install.Dir, "Cartridge.lock")
+
+	lockFile, err := os.Open(lockFilePath)
+	s.Nil(err)
+
+	dependencies, err := ParseDependencies(lockFile)
+	s.Nil(err)
+
+	s.Equal(2, len(dependencies))
+
+}
+
+func (s *InstallSuite) TestInstallWithLockFileWithRemovedDependencies() {
+	s.Install.Dir = fakeLockedGitRepoWithRemovedDepPath
+
+	err := s.Install.Run()
+	s.Nil(err)
+
+	lockFilePath := path.Join(s.Install.Dir, "Cartridge.lock")
+
+	lockFile, err := os.Open(lockFilePath)
+	s.Nil(err)
+
+	dependencies, err := ParseDependencies(lockFile)
+	s.Nil(err)
+
+	s.Equal(1, len(dependencies))
+	s.Equal(Dependency{Path: "github.com/xoebus/gocart", Version: "7c9d1a95d4b7979bc4180d4cb4aebfc036f276de"}, dependencies[0])
+}
+
 func (s *InstallSuite) gitRevision(path, rev string) string {
 	git := exec.Command("git", "rev-parse", rev)
 	git.Dir = path
@@ -310,12 +367,4 @@ func (s *InstallSuite) hgRevision(path string) string {
 	}
 
 	return strings.Trim(string(out), "\n")
-}
-
-func (s *InstallSuite) cleanupLock() {
-	lockFile := path.Join(s.Install.Dir, "Cartridge.lock")
-
-	if _, err := os.Stat(lockFile); err == nil {
-		os.Remove(lockFile)
-	}
 }

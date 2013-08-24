@@ -1,2 +1,2 @@
 fixtures/**/Cartridge.lock
-!fixtures/*_locked/Cartridge.lock
+!fixtures/*locked*/Cartridge.lock

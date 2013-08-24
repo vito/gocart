@@ -6,12 +6,6 @@ import (
 )
 
 var _ = Describe("Lockfile Merger", func() {
-	var merger *LockfileMerger
-
-	BeforeEach(func() {
-		merger = &LockfileMerger{}
-	})
-
 	Context("when there are no differences", func() {
 		It("returns the same set of dependencies", func() {
 			cartridgeDependencies := []Dependency{
@@ -22,7 +16,7 @@ var _ = Describe("Lockfile Merger", func() {
 				Dependency{Path: "a", Version: "x"},
 			}
 
-			resolved := merger.Merge(cartridgeDependencies, lockDependencies)
+			resolved := MergeDependencies(cartridgeDependencies, lockDependencies)
 			Expect(resolved).To(Equal([]Dependency{
 				Dependency{Path: "a", Version: "x"},
 			}))
@@ -39,7 +33,7 @@ var _ = Describe("Lockfile Merger", func() {
 				Dependency{Path: "a", Version: "y"},
 			}
 
-			resolved := merger.Merge(cartridgeDependencies, lockDependencies)
+			resolved := MergeDependencies(cartridgeDependencies, lockDependencies)
 			Expect(resolved).To(Equal([]Dependency{
 				Dependency{Path: "a", Version: "y"},
 			}))
@@ -57,7 +51,7 @@ var _ = Describe("Lockfile Merger", func() {
 				Dependency{Path: "b", Version: "x"},
 			}
 
-			resolved := merger.Merge(cartridgeDependencies, lockDependencies)
+			resolved := MergeDependencies(cartridgeDependencies, lockDependencies)
 			Expect(resolved).To(Equal([]Dependency{
 				Dependency{Path: "a", Version: "x"},
 			}))
@@ -75,7 +69,7 @@ var _ = Describe("Lockfile Merger", func() {
 				Dependency{Path: "a", Version: "x"},
 			}
 
-			resolved := merger.Merge(cartridgeDependencies, lockDependencies)
+			resolved := MergeDependencies(cartridgeDependencies, lockDependencies)
 			Expect(resolved).To(Equal([]Dependency{
 				Dependency{Path: "a", Version: "x"},
 				Dependency{Path: "b", Version: "x"},

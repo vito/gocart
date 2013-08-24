@@ -1,8 +1,6 @@
 package gocart
 
-type LockfileMerger struct{}
-
-func (merger *LockfileMerger) Merge(cartridgeList, lockList []Dependency) []Dependency {
+func MergeDependencies(cartridgeList, lockList []Dependency) []Dependency {
 	merged := []Dependency{}
 	versions := map[string]int{}
 

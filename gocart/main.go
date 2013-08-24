@@ -27,25 +27,12 @@ func main() {
 			Action: func(c *cli.Context) {
 				fmt.Println("Installing dependencies...")
 
-				var cartridge *os.File
-				var err error
+				requestedDependencies := loadFile(CartridgeFile)
+				lockedDependencies := loadFile(CartridgeLockFile)
 
-				if _, err := os.Stat(CartridgeLockFile); err == nil {
-					cartridge, err = os.Open(CartridgeLockFile)
-				} else {
-					cartridge, err = os.Open(CartridgeFile)
-				}
+				dependencies := gocart.MergeDependencies(requestedDependencies, lockedDependencies)
 
-				if err != nil {
-					log.Fatal(err)
-				}
-
-				dependencies, err := gocart.ParseDependencies(cartridge)
-				if err != nil {
-					log.Fatal(err)
-				}
-
-				err = installDependencies(dependencies)
+				err := installDependencies(dependencies)
 				if err != nil {
 					log.Fatal(err)
 				}
@@ -73,6 +60,20 @@ func main() {
 	}
 
 	app.Run(os.Args)
+}
+
+func loadFile(fileName string) []gocart.Dependency {
+	cartridge, err := os.Open(fileName)
+	if err != nil {
+		return []gocart.Dependency{}
+	}
+
+	dependencies, err := gocart.ParseDependencies(cartridge)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return dependencies
 }
 
 func installDependencies(dependencies []gocart.Dependency) error {

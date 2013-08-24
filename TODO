@@ -1,4 +1,2 @@
 * updating all dependencies
 * updating single dependency by partial path match (i.e. gocart update yagnats)
-* noticing additions/removals to Cartridge file
-  * and using them instead of what's in .lock
