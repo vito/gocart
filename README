@@ -8,19 +8,25 @@
 
                               A Go Package Manager
 
+= About
 
-= gocart install
+Gocart helps you keep your Go source dependencies at a stable and dependable
+versions.
 
-    for package in Godeps
-        go get -u <uri>
-        vcs checkout <ref>
-    end
+= Usage
 
-= gocart update
+Create a `Cartridge` file that lists the import path and source control version
+for your dependencies, for example:
 
-    for package in Godeps
-        go get -u <uri>
-        update NewGodeps
-    end
+    github.com/xoebus/kingpin    master
 
-    mv NewGoDeps Godeps
+While in the same directory as your new file run the command `gocart install`.
+Your dependencies will be installed into your GOPATH with your requested
+versions. You may use any valid (for the particular dependency) source control
+reference for the version number.
+
+= Authors
+
+* Alex Suraci
+* Chris Brown
+* Onsi Fakhouri
