@@ -13,6 +13,10 @@
 Gocart helps you keep your Go source dependencies at a stable and dependable
 versions.
 
+= Installation
+
+    $ go get github.com/xoebus/gocart/gocart
+
 = Usage
 
 Create a `Cartridge` file that lists the import path and source control version
