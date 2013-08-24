@@ -1,4 +1,4 @@
-package gocart
+package dependency
 
 import (
 	"errors"

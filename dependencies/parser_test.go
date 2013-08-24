@@ -1,9 +1,11 @@
-package gocart
+package dependencies
 
 import (
 	"bytes"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	. "github.com/xoebus/gocart/dependency"
 )
 
 var _ = Describe("Parsing cartridges", func() {
@@ -21,7 +23,7 @@ foo.com/bar master
 # i'm a pretty comment
 fizz.buzz/foo last:1`))
 
-			dependencies, err = ParseDependencies(cartridge)
+			dependencies, err = Parse(cartridge)
 		})
 
 		It("parses without error", func() {
@@ -47,7 +49,7 @@ fizz.buzz/foo last:1`))
 		BeforeEach(func() {
 			cartridge = bytes.NewBuffer([]byte(`foo.com/bar`))
 
-			_, err = ParseDependencies(cartridge)
+			_, err = Parse(cartridge)
 		})
 
 		It("returns an error", func() {

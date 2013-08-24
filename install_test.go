@@ -1,4 +1,4 @@
-package gocart
+package main
 
 import (
 	"io/ioutil"
@@ -11,6 +11,9 @@ import (
 	"testing"
 
 	"github.com/remogatto/prettytest"
+
+	"github.com/xoebus/gocart/dependencies"
+	"github.com/xoebus/gocart/dependency"
 )
 
 type InstallSuite struct {
@@ -134,13 +137,16 @@ func init() {
 }
 
 func (s *InstallSuite) BeforeAll() {
-	mainPath, err := filepath.Abs(path.Join(currentDirectory, "gocart", "main.go"))
+	mainPath, err := filepath.Abs(path.Join(currentDirectory, "main.go"))
+	s.Nil(err)
+
+	gopathPath, err := filepath.Abs(path.Join(currentDirectory, "gopath.go"))
 	s.Nil(err)
 
 	s.mainExecutable, err = ioutil.TempFile(os.TempDir(), "gocart_test_main")
 	s.Nil(err)
 
-	install := exec.Command("go", "build", "-o", s.mainExecutable.Name(), mainPath)
+	install := exec.Command("go", "build", "-o", s.mainExecutable.Name(), mainPath, gopathPath)
 	install.Stdout = os.Stdout
 	install.Stderr = os.Stderr
 	install.Stdin = os.Stdin
@@ -255,7 +261,7 @@ func (s *InstallSuite) TestInstallWithoutLockFileGeneratesLockFile() {
 	lockFile, err := os.Open(lockFilePath)
 	s.Nil(err)
 
-	dependencies, err := ParseDependencies(lockFile)
+	dependencies, err := dependencies.Parse(lockFile)
 	s.Nil(err)
 
 	s.Equal(len(dependencies), 2)
@@ -270,12 +276,12 @@ func (s *InstallSuite) TestInstallWithoutLockFileGeneratesLockFile() {
 	dependency1Version, err := dependencies[1].CurrentVersion(s.GOPATH)
 	s.Nil(err)
 
-	s.Equal(dependencies[0], Dependency{
+	s.Equal(dependencies[0], dependency.Dependency{
 		Path:    "github.com/xoebus/gocart",
 		Version: dependency0Version,
 	})
 
-	s.Equal(dependencies[1], Dependency{
+	s.Equal(dependencies[1], dependency.Dependency{
 		Path:    "code.google.com/p/go.crypto/ssh",
 		Version: dependency1Version,
 	})
@@ -313,7 +319,7 @@ func (s *InstallSuite) TestInstallWithLockFileWithNewDependencies() {
 	lockFile, err := os.Open(lockFilePath)
 	s.Nil(err)
 
-	dependencies, err := ParseDependencies(lockFile)
+	dependencies, err := dependencies.Parse(lockFile)
 	s.Nil(err)
 
 	s.Equal(2, len(dependencies))
@@ -331,14 +337,14 @@ func (s *InstallSuite) TestInstallWithLockFileWithRemovedDependencies() {
 	lockFile, err := os.Open(lockFilePath)
 	s.Nil(err)
 
-	dependencies, err := ParseDependencies(lockFile)
+	dependencies, err := dependencies.Parse(lockFile)
 	s.Nil(err)
 
 	s.Equal(1, len(dependencies))
 
 	if len(dependencies) == 1 {
 		s.Equal(
-			Dependency{
+			dependency.Dependency{
 				Path:    "github.com/xoebus/gocart",
 				Version: "7c9d1a95d4b7979bc4180d4cb4aebfc036f276de",
 			},

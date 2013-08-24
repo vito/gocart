@@ -1,2 +1,8 @@
 * updating all dependencies
 * updating single dependency by partial path match (i.e. gocart update yagnats)
+
+* redo parser
+* switch entirely to ginkgo/gomega
+* restructure repo
+  * package main up top
+  * many small packages

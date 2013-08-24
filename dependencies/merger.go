@@ -1,7 +1,11 @@
-package gocart
+package dependencies
 
-func MergeDependencies(cartridgeList, lockList []Dependency) []Dependency {
-	merged := []Dependency{}
+import (
+	"github.com/xoebus/gocart/dependency"
+)
+
+func Merge(cartridgeList, lockList []dependency.Dependency) []dependency.Dependency {
+	merged := []dependency.Dependency{}
 	versions := map[string]int{}
 
 	for i, c := range cartridgeList {

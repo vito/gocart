@@ -8,7 +8,8 @@ import (
 
 	"github.com/codegangsta/cli"
 
-	"github.com/xoebus/gocart"
+	"github.com/xoebus/gocart/dependencies"
+	"github.com/xoebus/gocart/dependency"
 )
 
 const CartridgeFile = "Cartridge"
@@ -30,7 +31,7 @@ func main() {
 				requestedDependencies := loadFile(CartridgeFile)
 				lockedDependencies := loadFile(CartridgeLockFile)
 
-				dependencies := gocart.MergeDependencies(requestedDependencies, lockedDependencies)
+				dependencies := dependencies.Merge(requestedDependencies, lockedDependencies)
 
 				err := installDependencies(dependencies)
 				if err != nil {
@@ -62,28 +63,28 @@ func main() {
 	app.Run(os.Args)
 }
 
-func loadFile(fileName string) []gocart.Dependency {
-	cartridge, err := os.Open(fileName)
+func loadFile(fileName string) []dependency.Dependency {
+	depsFile, err := os.Open(fileName)
 	if err != nil {
-		return []gocart.Dependency{}
+		return []dependency.Dependency{}
 	}
 
-	dependencies, err := gocart.ParseDependencies(cartridge)
+	deps, err := dependencies.Parse(depsFile)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	return dependencies
+	return deps
 }
 
-func installDependencies(dependencies []gocart.Dependency) error {
+func installDependencies(dependencies []dependency.Dependency) error {
 	for _, dependency := range dependencies {
 		err := dependency.Get()
 		if err != nil {
 			return err
 		}
 
-		gopath, err := gocart.InstallationDirectory(os.Getenv("GOPATH"))
+		gopath, err := InstallationDirectory(os.Getenv("GOPATH"))
 		if err != nil {
 			return err
 		}
@@ -97,9 +98,9 @@ func installDependencies(dependencies []gocart.Dependency) error {
 	return nil
 }
 
-func updateLockFile(writer io.Writer, dependencies []gocart.Dependency) error {
+func updateLockFile(writer io.Writer, dependencies []dependency.Dependency) error {
 	for _, dependency := range dependencies {
-		gopath, err := gocart.InstallationDirectory(os.Getenv("GOPATH"))
+		gopath, err := InstallationDirectory(os.Getenv("GOPATH"))
 		if err != nil {
 			return err
 		}

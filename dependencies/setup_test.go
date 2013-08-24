@@ -1,4 +1,4 @@
-package main
+package dependencies
 
 import (
 	. "github.com/onsi/ginkgo"
@@ -8,5 +8,5 @@ import (
 
 func Test(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Gocart")
+	RunSpecs(t, "Gocart Dependencies")
 }

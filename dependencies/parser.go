@@ -1,4 +1,4 @@
-package gocart
+package dependencies
 
 import (
 	"bufio"
@@ -6,15 +6,17 @@ import (
 	"fmt"
 	"io"
 	"regexp"
+
+	"github.com/xoebus/gocart/dependency"
 )
 
 var skippableLine *regexp.Regexp = regexp.MustCompile(`^\s*(#.*)?\s*$`)
 var dependencyList *regexp.Regexp = regexp.MustCompile(`^\s*([^\s]+)\s+([^\s]+)\s*$`)
 
-func ParseDependencies(reader io.Reader) ([]Dependency, error) {
+func Parse(reader io.Reader) ([]dependency.Dependency, error) {
 	bufferedReader := bufio.NewReader(reader)
 
-	dependencies := []Dependency{}
+	dependencies := []dependency.Dependency{}
 
 	for eof := false; !eof; {
 		line, err := bufferedReader.ReadString('\n')
@@ -34,7 +36,7 @@ func ParseDependencies(reader io.Reader) ([]Dependency, error) {
 			return nil, errors.New(message)
 		}
 
-		dependency := Dependency{
+		dependency := dependency.Dependency{
 			Path:    dependencyLine[1],
 			Version: dependencyLine[2],
 		}
