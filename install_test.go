@@ -40,7 +40,7 @@ var currentDirectory,
 	fakeBzrRepoPath, fakeBzrRepoWithRevisionPath string
 
 func walkTheDinosaur(src, dest string) error {
-	cp := exec.Command("cp", "-r", src+"/", dest)
+	cp := exec.Command("cp", "-r", src+"/", dest+"/")
 	return cp.Run()
 }
 
