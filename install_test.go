@@ -40,7 +40,7 @@ var currentDirectory,
 	fakeBzrRepoPath, fakeBzrRepoWithRevisionPath string
 
 func walkTheDinosaur(src, dest string) error {
-	cp := exec.Command("cp", "-r", src+"/", dest+"/")
+	cp := exec.Command("cp", "-r", src, dest)
 	return cp.Run()
 }
 
@@ -55,7 +55,10 @@ func init() {
 		panic(err)
 	}
 
-	walkTheDinosaur(currentDirectory, destTmpDir)
+	err = walkTheDinosaur(currentDirectory, destTmpDir)
+	if err != nil {
+		panic(err)
+	}
 
 	fakeDiverseRepoPath, err = filepath.Abs(
 		path.Join(destTmpDir, "fixtures", "fake_diverse_repo"),
