@@ -21,11 +21,9 @@ func (d Dependency) String() string {
 }
 
 func (d Dependency) Get() error {
-	get := exec.Command("go", "get", "-u", "-d", "-v", d.Path)
-	get.Stdout = os.Stdout
-	get.Stderr = os.Stderr
-	get.Stdin = os.Stdin
-	return get.Run()
+	runner := &ShellCommandRunner{}
+	fetcher := NewDependencyFetcher(runner)
+	return fetcher.Fetch(d)
 }
 
 func (d Dependency) Checkout(gopath string) error {
