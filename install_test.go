@@ -330,7 +330,16 @@ func (s *InstallSuite) TestInstallWithLockFileWithRemovedDependencies() {
 	s.Nil(err)
 
 	s.Equal(1, len(dependencies))
-	s.Equal(Dependency{Path: "github.com/xoebus/gocart", Version: "7c9d1a95d4b7979bc4180d4cb4aebfc036f276de"}, dependencies[0])
+
+	if len(dependencies) == 1 {
+		s.Equal(
+			Dependency{
+				Path:    "github.com/xoebus/gocart",
+				Version: "7c9d1a95d4b7979bc4180d4cb4aebfc036f276de",
+			},
+			dependencies[0],
+		)
+	}
 }
 
 func (s *InstallSuite) gitRevision(path, rev string) string {
