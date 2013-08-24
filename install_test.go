@@ -60,71 +60,73 @@ func init() {
 		panic(err)
 	}
 
+	gocartDir := path.Join(destTmpDir, "gocart")
+
 	fakeDiverseRepoPath, err = filepath.Abs(
-		path.Join(destTmpDir, "fixtures", "fake_diverse_repo"),
+		path.Join(gocartDir, "fixtures", "fake_diverse_repo"),
 	)
 	if err != nil {
 		panic(err)
 	}
 
 	fakeLockedGitRepoPath, err = filepath.Abs(
-		path.Join(destTmpDir, "fixtures", "fake_git_repo_locked"),
+		path.Join(gocartDir, "fixtures", "fake_git_repo_locked"),
 	)
 	if err != nil {
 		panic(err)
 	}
 
 	fakeLockedGitRepoWithNewDepPath, err = filepath.Abs(
-		path.Join(destTmpDir, "fixtures", "fake_git_repo_locked_with_new_dep"),
+		path.Join(gocartDir, "fixtures", "fake_git_repo_locked_with_new_dep"),
 	)
 	if err != nil {
 		panic(err)
 	}
 
 	fakeLockedGitRepoWithRemovedDepPath, err = filepath.Abs(
-		path.Join(destTmpDir, "fixtures", "fake_git_repo_locked_with_removed_dep"),
+		path.Join(gocartDir, "fixtures", "fake_git_repo_locked_with_removed_dep"),
 	)
 	if err != nil {
 		panic(err)
 	}
 
 	fakeGitRepoPath, err = filepath.Abs(
-		path.Join(destTmpDir, "fixtures", "fake_git_repo"),
+		path.Join(gocartDir, "fixtures", "fake_git_repo"),
 	)
 	if err != nil {
 		panic(err)
 	}
 
 	fakeGitRepoWithRevisionPath, err = filepath.Abs(
-		path.Join(destTmpDir, "fixtures", "fake_git_repo_with_revision"),
+		path.Join(gocartDir, "fixtures", "fake_git_repo_with_revision"),
 	)
 	if err != nil {
 		panic(err)
 	}
 
 	fakeBzrRepoPath, err = filepath.Abs(
-		path.Join(destTmpDir, "fixtures", "fake_bzr_repo"),
+		path.Join(gocartDir, "fixtures", "fake_bzr_repo"),
 	)
 	if err != nil {
 		panic(err)
 	}
 
 	fakeBzrRepoWithRevisionPath, err = filepath.Abs(
-		path.Join(destTmpDir, "fixtures", "fake_bzr_repo_with_revision"),
+		path.Join(gocartDir, "fixtures", "fake_bzr_repo_with_revision"),
 	)
 	if err != nil {
 		panic(err)
 	}
 
 	fakeHgRepoPath, err = filepath.Abs(
-		path.Join(destTmpDir, "fixtures", "fake_hg_repo"),
+		path.Join(gocartDir, "fixtures", "fake_hg_repo"),
 	)
 	if err != nil {
 		panic(err)
 	}
 
 	fakeHgRepoWithRevisionPath, err = filepath.Abs(
-		path.Join(destTmpDir, "fixtures", "fake_hg_repo_with_revision"),
+		path.Join(gocartDir, "fixtures", "fake_hg_repo_with_revision"),
 	)
 	if err != nil {
 		panic(err)
