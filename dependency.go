@@ -20,43 +20,8 @@ func (d Dependency) String() string {
 	return fmt.Sprintf("%s\t%s", d.Path, d.Version)
 }
 
-func (d Dependency) Checkout(gopath string) error {
-	repoPath := d.fullPath(gopath)
-
-	var checkout *exec.Cmd
-
-	if findDirectory(repoPath, ".hg") {
-		checkout = exec.Command("hg", "update", "-c", d.Version)
-	}
-
-	if findDirectory(repoPath, ".git") {
-		checkout = exec.Command("git", "checkout", d.Version)
-	}
-
-	if findDirectory(repoPath, ".bzr") {
-		checkout = exec.Command("bzr", "update", "-r", d.Version)
-	}
-
-	if checkout == nil {
-		return UnknownDependencyType
-	}
-
-	checkout.Dir = repoPath
-
-	checkout.Stdout = os.Stdout
-	checkout.Stderr = os.Stderr
-	checkout.Stdin = os.Stdin
-
-	err := checkout.Run()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (d Dependency) CurrentVersion(gopath string) (string, error) {
-	repoPath := d.fullPath(gopath)
+	repoPath := d.FullPath(gopath)
 
 	var version *exec.Cmd
 
@@ -86,7 +51,7 @@ func (d Dependency) CurrentVersion(gopath string) (string, error) {
 	return strings.Trim(string(out), "\n"), nil
 }
 
-func (d Dependency) fullPath(gopath string) string {
+func (d Dependency) FullPath(gopath string) string {
 	return path.Join(gopath, "src", d.Path)
 }
 

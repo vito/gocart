@@ -78,21 +78,14 @@ func loadFile(fileName string) []gocart.Dependency {
 }
 
 func installDependencies(dependencies []gocart.Dependency) error {
-	runner := &ShellCommandRunner{}
-	fetcher := NewDependencyFetcher(runner)
+	runner := &gocart.ShellCommandRunner{}
+	fetcher, err := gocart.NewDependencyFetcher(runner)
+	if err != nil {
+		return err
+	}
 
 	for _, dependency := range dependencies {
-		err := fetcher.Fetch(d)
-		if err != nil {
-			return err
-		}
-
-		gopath, err := gocart.InstallationDirectory(os.Getenv("GOPATH"))
-		if err != nil {
-			return err
-		}
-
-		err = dependency.Checkout(gopath)
+		err = fetcher.Fetch(dependency)
 		if err != nil {
 			return err
 		}

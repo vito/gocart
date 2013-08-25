@@ -23,7 +23,7 @@ var _ = Describe("Dependency", func() {
 
 	Describe("the full path of the dependency", func() {
 		It("prepends the passed in root path", func() {
-			Expect(dependency.fullPath("/tmp")).To(Equal("/tmp/src/github.com/xoebus/kingpin"))
+			Expect(dependency.FullPath("/tmp")).To(Equal("/tmp/src/github.com/xoebus/kingpin"))
 		})
 	})
 })
