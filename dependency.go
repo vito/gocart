@@ -20,12 +20,6 @@ func (d Dependency) String() string {
 	return fmt.Sprintf("%s\t%s", d.Path, d.Version)
 }
 
-func (d Dependency) Get() error {
-	runner := &ShellCommandRunner{}
-	fetcher := NewDependencyFetcher(runner)
-	return fetcher.Fetch(d)
-}
-
 func (d Dependency) Checkout(gopath string) error {
 	repoPath := d.fullPath(gopath)
 
