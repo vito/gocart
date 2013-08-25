@@ -255,7 +255,8 @@ func (s *InstallSuite) TestInstallWithoutLockFileGeneratesLockFile() {
 	lockFile, err := os.Open(lockFilePath)
 	s.Nil(err)
 
-	dependencies, err := ParseDependencies(lockFile)
+	reader := NewReader(lockFile)
+	dependencies, err := reader.ReadAll()
 	s.Nil(err)
 
 	s.Equal(len(dependencies), 2)
@@ -313,7 +314,8 @@ func (s *InstallSuite) TestInstallWithLockFileWithNewDependencies() {
 	lockFile, err := os.Open(lockFilePath)
 	s.Nil(err)
 
-	dependencies, err := ParseDependencies(lockFile)
+	reader := NewReader(lockFile)
+	dependencies, err := reader.ReadAll()
 	s.Nil(err)
 
 	s.Equal(2, len(dependencies))
@@ -331,7 +333,8 @@ func (s *InstallSuite) TestInstallWithLockFileWithRemovedDependencies() {
 	lockFile, err := os.Open(lockFilePath)
 	s.Nil(err)
 
-	dependencies, err := ParseDependencies(lockFile)
+	reader := NewReader(lockFile)
+	dependencies, err := reader.ReadAll()
 	s.Nil(err)
 
 	s.Equal(1, len(dependencies))

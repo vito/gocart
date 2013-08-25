@@ -68,7 +68,8 @@ func loadFile(fileName string) []gocart.Dependency {
 		return []gocart.Dependency{}
 	}
 
-	dependencies, err := gocart.ParseDependencies(cartridge)
+	reader := gocart.NewReader(cartridge)
+	dependencies, err := reader.ReadAll()
 	if err != nil {
 		log.Fatal(err)
 	}
