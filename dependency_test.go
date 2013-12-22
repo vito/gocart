@@ -1,15 +1,17 @@
-package gocart
+package gocart_test
 
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"github.com/vito/gocart"
 )
 
 var _ = Describe("Dependency", func() {
-	var dependency Dependency
+	var dependency gocart.Dependency
 
 	BeforeEach(func() {
-		dependency = Dependency{
+		dependency = gocart.Dependency{
 			Path:    "github.com/xoebus/kingpin",
 			Version: "master",
 		}

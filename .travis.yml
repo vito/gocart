@@ -1,11 +1,9 @@
 language: go
 go:
-  - 1.1
-  - tip
+  - 1.2
 
 install:
-  - go get -v github.com/remogatto/prettytest
-  - go get -v github.com/onsi/gomega
-  - go get -v github.com/onsi/ginkgo
-  - go get -v ./...
-  - go build -v ./...
+  - go get -t -v ./...
+
+script:
+  - ginkgo -r -i -v

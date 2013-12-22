@@ -1,4 +1,4 @@
-package gocart
+package gocart_test
 
 import (
 	"io"
@@ -6,14 +6,16 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"github.com/vito/gocart"
 )
 
 var _ = Describe("Cartridge Reader", func() {
-	var reader *Reader
+	var reader *gocart.Reader
 	var inputReader io.Reader
 
 	JustBeforeEach(func() {
-		reader = NewReader(inputReader)
+		reader = gocart.NewReader(inputReader)
 	})
 
 	Context("with an empty input", func() {
@@ -40,7 +42,7 @@ var _ = Describe("Cartridge Reader", func() {
 			Expect(err).ToNot(HaveOccured())
 
 			Expect(deps).To(HaveLen(1))
-			Expect(deps[0]).To(Equal(Dependency{
+			Expect(deps[0]).To(Equal(gocart.Dependency{
 				Path:    "github.com/xoebus/kingpin",
 				Version: "master",
 			}))
@@ -60,7 +62,7 @@ var _ = Describe("Cartridge Reader", func() {
 			Expect(err).ToNot(HaveOccured())
 
 			Expect(deps).To(HaveLen(1))
-			Expect(deps[0]).To(Equal(Dependency{
+			Expect(deps[0]).To(Equal(gocart.Dependency{
 				Path:    "github.com/xoebus/kingpin",
 				Version: "master",
 			}))
@@ -80,11 +82,11 @@ var _ = Describe("Cartridge Reader", func() {
 			Expect(err).ToNot(HaveOccured())
 
 			Expect(deps).To(HaveLen(2))
-			Expect(deps[0]).To(Equal(Dependency{
+			Expect(deps[0]).To(Equal(gocart.Dependency{
 				Path:    "github.com/xoebus/kingpin",
 				Version: "master",
 			}))
-			Expect(deps[1]).To(Equal(Dependency{
+			Expect(deps[1]).To(Equal(gocart.Dependency{
 				Path:    "github.com/vito/gocart",
 				Version: "v1.0",
 			}))
@@ -105,11 +107,11 @@ var _ = Describe("Cartridge Reader", func() {
 			Expect(err).ToNot(HaveOccured())
 
 			Expect(deps).To(HaveLen(2))
-			Expect(deps[0]).To(Equal(Dependency{
+			Expect(deps[0]).To(Equal(gocart.Dependency{
 				Path:    "github.com/xoebus/kingpin",
 				Version: "master",
 			}))
-			Expect(deps[1]).To(Equal(Dependency{
+			Expect(deps[1]).To(Equal(gocart.Dependency{
 				Path:    "github.com/vito/gocart",
 				Version: "v1.0",
 			}))
@@ -146,11 +148,11 @@ var _ = Describe("Cartridge Reader", func() {
 			Expect(err).ToNot(HaveOccured())
 
 			Expect(deps).To(HaveLen(2))
-			Expect(deps[0]).To(Equal(Dependency{
+			Expect(deps[0]).To(Equal(gocart.Dependency{
 				Path:    "github.com/xoebus/kingpin",
 				Version: "master",
 			}))
-			Expect(deps[1]).To(Equal(Dependency{
+			Expect(deps[1]).To(Equal(gocart.Dependency{
 				Path:    "github.com/vito/gocart",
 				Version: "v1.0",
 			}))

@@ -1,4 +1,4 @@
-package gocart
+package gocart_test
 
 import (
 	"os"
@@ -6,22 +6,24 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"github.com/vito/gocart"
 	"github.com/vito/gocart/fakes"
 )
 
 var _ = Describe("Dependency Fetcher", func() {
-	var dependency Dependency
-	var fetcher *DependencyFetcher
+	var dependency gocart.Dependency
+	var fetcher *gocart.DependencyFetcher
 	var runner *fakes.FakeCommandRunner
 	var err error
 
 	BeforeEach(func() {
-		dependency = Dependency{
+		dependency = gocart.Dependency{
 			Path:    "github.com/vito/gocart",
 			Version: "v1.2",
 		}
 		runner = &fakes.FakeCommandRunner{}
-		fetcher, err = NewDependencyFetcher(runner)
+		fetcher, err = gocart.NewDependencyFetcher(runner)
 		Expect(err).ToNot(HaveOccured())
 	})
 
@@ -43,7 +45,7 @@ var _ = Describe("Dependency Fetcher", func() {
 		})
 
 		It("changes the repository version to be the version specified in the dependency", func() {
-			gopath, _ := InstallationDirectory(os.Getenv("GOPATH"))
+			gopath, _ := gocart.InstallationDirectory(os.Getenv("GOPATH"))
 
 			args := runner.Commands[1].Args
 			Expect(runner.Commands[1].Dir).To(Equal(dependency.FullPath(gopath)))

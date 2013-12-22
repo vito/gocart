@@ -1,4 +1,4 @@
-package gocart
+package gocart_test
 
 import (
 	"io/ioutil"
@@ -7,6 +7,8 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"github.com/vito/gocart"
 )
 
 var _ = Describe("A Repository", func() {
@@ -27,17 +29,17 @@ var _ = Describe("A Repository", func() {
 
 		Describe("type identification", func() {
 			It("returns that it is a GitRepository", func() {
-				repo, err := NewRepository(repoPath)
+				repo, err := gocart.NewRepository(repoPath)
 				Expect(err).ToNot(HaveOccured())
 
-				_, correctType := repo.(*GitRepository)
+				_, correctType := repo.(*gocart.GitRepository)
 				Expect(correctType).To(BeTrue())
 			})
 		})
 
 		Describe("the checkout command", func() {
 			It("uses the correct one", func() {
-				repo, err := NewRepository(repoPath)
+				repo, err := gocart.NewRepository(repoPath)
 				Expect(err).ToNot(HaveOccured())
 
 				command := repo.CheckoutCommand("v1.4")
@@ -66,16 +68,16 @@ var _ = Describe("A Repository", func() {
 			})
 
 			It("returns that it is a HgRepository", func() {
-				repo, err := NewRepository(repoPath)
+				repo, err := gocart.NewRepository(repoPath)
 				Expect(err).ToNot(HaveOccured())
 
-				_, correctType := repo.(*HgRepository)
+				_, correctType := repo.(*gocart.HgRepository)
 				Expect(correctType).To(BeTrue())
 			})
 
 			Describe("the checkout command", func() {
 				It("uses the correct one", func() {
-					repo, err := NewRepository(repoPath)
+					repo, err := gocart.NewRepository(repoPath)
 					Expect(err).ToNot(HaveOccured())
 
 					command := repo.CheckoutCommand("v1.12")
@@ -106,16 +108,16 @@ var _ = Describe("A Repository", func() {
 			})
 
 			It("returns that it is a BzrRepository", func() {
-				repo, err := NewRepository(repoPath)
+				repo, err := gocart.NewRepository(repoPath)
 				Expect(err).ToNot(HaveOccured())
 
-				_, correctType := repo.(*BzrRepository)
+				_, correctType := repo.(*gocart.BzrRepository)
 				Expect(correctType).To(BeTrue())
 			})
 
 			Describe("the checkout command", func() {
 				It("uses the correct one", func() {
-					repo, err := NewRepository(repoPath)
+					repo, err := gocart.NewRepository(repoPath)
 					Expect(err).ToNot(HaveOccured())
 
 					command := repo.CheckoutCommand("353")
@@ -146,7 +148,7 @@ var _ = Describe("A Repository", func() {
 			})
 
 			It("returns an error", func() {
-				_, err := NewRepository(repoPath)
+				_, err := gocart.NewRepository(repoPath)
 				Expect(err).To(HaveOccured())
 				Expect(err.Error()).To(ContainSubstring("unknown repository type"))
 			})
@@ -174,10 +176,10 @@ var _ = Describe("A Repository", func() {
 		})
 
 		It("recurses up the directory tree until it finds a repo it knows", func() {
-			repo, err := NewRepository(subDir)
+			repo, err := gocart.NewRepository(subDir)
 			Expect(err).ToNot(HaveOccured())
 
-			_, correctType := repo.(*HgRepository)
+			_, correctType := repo.(*gocart.HgRepository)
 			Expect(correctType).To(BeTrue())
 		})
 	})

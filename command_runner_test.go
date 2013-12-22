@@ -1,4 +1,4 @@
-package gocart
+package gocart_test
 
 import (
 	"bytes"
@@ -6,14 +6,16 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"github.com/vito/gocart"
 )
 
 var _ = Describe("Shell Command Runner", func() {
-	var runner *ShellCommandRunner
+	var runner *gocart.ShellCommandRunner
 	var buffer *bytes.Buffer
 
 	BeforeEach(func() {
-		runner = &ShellCommandRunner{}
+		runner = &gocart.ShellCommandRunner{}
 		buffer = &bytes.Buffer{}
 	})
 
