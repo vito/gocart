@@ -1,7 +1,11 @@
-package gocart
+package locker
 
-func MergeDependencies(cartridgeList, lockList []Dependency) []Dependency {
-	merged := []Dependency{}
+import (
+	"github.com/vito/gocart/dependency"
+)
+
+func GenerateLock(cartridgeList, lockList []dependency.Dependency) []dependency.Dependency {
+	merged := []dependency.Dependency{}
 	versions := map[string]int{}
 
 	for i, c := range cartridgeList {

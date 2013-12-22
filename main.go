@@ -6,7 +6,11 @@ import (
 	"log"
 	"os"
 
-	"github.com/vito/gocart"
+	"github.com/vito/gocart/command_runner"
+	"github.com/vito/gocart/dependency"
+	"github.com/vito/gocart/dependency_fetcher"
+	"github.com/vito/gocart/dependency_reader"
+	"github.com/vito/gocart/locker"
 )
 
 const GocartVersion = "0.1.0"
@@ -41,9 +45,9 @@ func install() {
 	requestedDependencies := loadFile(CartridgeFile)
 	lockedDependencies := loadFile(CartridgeLockFile)
 
-	dependencies := gocart.MergeDependencies(requestedDependencies, lockedDependencies)
+	dependencies := locker.GenerateLock(requestedDependencies, lockedDependencies)
 
-	err := installDependencies(dependencies)
+	newLockedDependencies, err := installDependencies(dependencies)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -56,7 +60,7 @@ func install() {
 
 	out := io.MultiWriter(file, os.Stdout)
 
-	err = updateLockFile(out, dependencies)
+	err = updateLockFile(out, newLockedDependencies)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -98,13 +102,14 @@ func unknownCommand() {
 	os.Exit(1)
 }
 
-func loadFile(fileName string) []gocart.Dependency {
+func loadFile(fileName string) []dependency.Dependency {
 	cartridge, err := os.Open(fileName)
 	if err != nil {
-		return []gocart.Dependency{}
+		return []dependency.Dependency{}
 	}
 
-	reader := gocart.NewReader(cartridge)
+	reader := dependency_reader.New(cartridge)
+
 	dependencies, err := reader.ReadAll()
 	if err != nil {
 		log.Fatal(err)
@@ -113,36 +118,31 @@ func loadFile(fileName string) []gocart.Dependency {
 	return dependencies
 }
 
-func installDependencies(dependencies []gocart.Dependency) error {
-	runner := &gocart.ShellCommandRunner{}
-	fetcher, err := gocart.NewDependencyFetcher(runner)
+func installDependencies(dependencies []dependency.Dependency) ([]dependency.Dependency, error) {
+	runner := command_runner.New()
+
+	lockedDependencies := []dependency.Dependency{}
+
+	fetcher, err := dependency_fetcher.New(runner)
 	if err != nil {
-		return err
+		return []dependency.Dependency{}, err
 	}
 
-	for _, dependency := range dependencies {
-		err = fetcher.Fetch(dependency)
+	for _, dep := range dependencies {
+		lockedDependency, err := fetcher.Fetch(dep)
 		if err != nil {
-			return err
+			return []dependency.Dependency{}, err
 		}
+
+		lockedDependencies = append(lockedDependencies, lockedDependency)
 	}
 
-	return nil
+	return lockedDependencies, nil
 }
 
-func updateLockFile(writer io.Writer, dependencies []gocart.Dependency) error {
+func updateLockFile(writer io.Writer, dependencies []dependency.Dependency) error {
 	for _, dependency := range dependencies {
-		gopath, err := gocart.InstallationDirectory(os.Getenv("GOPATH"))
-		if err != nil {
-			return err
-		}
-
-		version, err := dependency.CurrentVersion(gopath)
-		if err != nil {
-			return err
-		}
-
-		writer.Write([]byte(fmt.Sprintf("%s\t%s\n", dependency.Path, version)))
+		writer.Write([]byte(fmt.Sprintf("%s\t%s\n", dependency.Path, dependency.Version)))
 	}
 
 	return nil

@@ -15,7 +15,7 @@ versions.
 
 = Installation
 
-    $ go get github.com/vito/gocart/gocart
+    $ go get github.com/vito/gocart
 
 = Usage
 

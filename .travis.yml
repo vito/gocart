@@ -4,7 +4,7 @@ go:
 
 install:
   - export PATH=$HOME/gopath/bin:$PATH
-  - go install ./gocart
+  - go install .
   - gocart
   - go install github.com/onsi/ginkgo/ginkgo
 

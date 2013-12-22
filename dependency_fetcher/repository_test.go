@@ -1,4 +1,4 @@
-package gocart_test
+package dependency_fetcher_test
 
 import (
 	"io/ioutil"
@@ -8,7 +8,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/vito/gocart"
+	"github.com/vito/gocart/dependency_fetcher"
 )
 
 var _ = Describe("A Repository", func() {
@@ -18,7 +18,7 @@ var _ = Describe("A Repository", func() {
 
 		BeforeEach(func() {
 			repoPath, err = ioutil.TempDir(os.TempDir(), "git_repo")
-			Expect(err).ToNot(HaveOccured())
+			Expect(err).ToNot(HaveOccurred())
 
 			os.Mkdir(path.Join(repoPath, ".git"), 0600)
 		})
@@ -29,18 +29,18 @@ var _ = Describe("A Repository", func() {
 
 		Describe("type identification", func() {
 			It("returns that it is a GitRepository", func() {
-				repo, err := gocart.NewRepository(repoPath)
-				Expect(err).ToNot(HaveOccured())
+				repo, err := dependency_fetcher.NewRepository(repoPath)
+				Expect(err).ToNot(HaveOccurred())
 
-				_, correctType := repo.(*gocart.GitRepository)
+				_, correctType := repo.(*dependency_fetcher.GitRepository)
 				Expect(correctType).To(BeTrue())
 			})
 		})
 
 		Describe("the checkout command", func() {
 			It("uses the correct one", func() {
-				repo, err := gocart.NewRepository(repoPath)
-				Expect(err).ToNot(HaveOccured())
+				repo, err := dependency_fetcher.NewRepository(repoPath)
+				Expect(err).ToNot(HaveOccurred())
 
 				command := repo.CheckoutCommand("v1.4")
 
@@ -58,7 +58,7 @@ var _ = Describe("A Repository", func() {
 
 			BeforeEach(func() {
 				repoPath, err = ioutil.TempDir(os.TempDir(), "hg_repo")
-				Expect(err).ToNot(HaveOccured())
+				Expect(err).ToNot(HaveOccurred())
 
 				os.Mkdir(path.Join(repoPath, ".hg"), 0600)
 			})
@@ -68,17 +68,17 @@ var _ = Describe("A Repository", func() {
 			})
 
 			It("returns that it is a HgRepository", func() {
-				repo, err := gocart.NewRepository(repoPath)
-				Expect(err).ToNot(HaveOccured())
+				repo, err := dependency_fetcher.NewRepository(repoPath)
+				Expect(err).ToNot(HaveOccurred())
 
-				_, correctType := repo.(*gocart.HgRepository)
+				_, correctType := repo.(*dependency_fetcher.HgRepository)
 				Expect(correctType).To(BeTrue())
 			})
 
 			Describe("the checkout command", func() {
 				It("uses the correct one", func() {
-					repo, err := gocart.NewRepository(repoPath)
-					Expect(err).ToNot(HaveOccured())
+					repo, err := dependency_fetcher.NewRepository(repoPath)
+					Expect(err).ToNot(HaveOccurred())
 
 					command := repo.CheckoutCommand("v1.12")
 
@@ -98,7 +98,7 @@ var _ = Describe("A Repository", func() {
 
 			BeforeEach(func() {
 				repoPath, err = ioutil.TempDir(os.TempDir(), "bzr_repo")
-				Expect(err).ToNot(HaveOccured())
+				Expect(err).ToNot(HaveOccurred())
 
 				os.Mkdir(path.Join(repoPath, ".bzr"), 0600)
 			})
@@ -108,17 +108,17 @@ var _ = Describe("A Repository", func() {
 			})
 
 			It("returns that it is a BzrRepository", func() {
-				repo, err := gocart.NewRepository(repoPath)
-				Expect(err).ToNot(HaveOccured())
+				repo, err := dependency_fetcher.NewRepository(repoPath)
+				Expect(err).ToNot(HaveOccurred())
 
-				_, correctType := repo.(*gocart.BzrRepository)
+				_, correctType := repo.(*dependency_fetcher.BzrRepository)
 				Expect(correctType).To(BeTrue())
 			})
 
 			Describe("the checkout command", func() {
 				It("uses the correct one", func() {
-					repo, err := gocart.NewRepository(repoPath)
-					Expect(err).ToNot(HaveOccured())
+					repo, err := dependency_fetcher.NewRepository(repoPath)
+					Expect(err).ToNot(HaveOccurred())
 
 					command := repo.CheckoutCommand("353")
 
@@ -138,7 +138,7 @@ var _ = Describe("A Repository", func() {
 
 			BeforeEach(func() {
 				repoPath, err = ioutil.TempDir(os.TempDir(), "unknown_repo")
-				Expect(err).ToNot(HaveOccured())
+				Expect(err).ToNot(HaveOccurred())
 
 				os.Mkdir(path.Join(repoPath, ".unknown"), 0600)
 			})
@@ -148,8 +148,8 @@ var _ = Describe("A Repository", func() {
 			})
 
 			It("returns an error", func() {
-				_, err := gocart.NewRepository(repoPath)
-				Expect(err).To(HaveOccured())
+				_, err := dependency_fetcher.NewRepository(repoPath)
+				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(ContainSubstring("unknown repository type"))
 			})
 		})
@@ -163,7 +163,7 @@ var _ = Describe("A Repository", func() {
 
 		BeforeEach(func() {
 			repoPath, err = ioutil.TempDir(os.TempDir(), "hg_repo")
-			Expect(err).ToNot(HaveOccured())
+			Expect(err).ToNot(HaveOccurred())
 
 			subDir = path.Join(repoPath, "a", "subdir")
 
@@ -176,10 +176,10 @@ var _ = Describe("A Repository", func() {
 		})
 
 		It("recurses up the directory tree until it finds a repo it knows", func() {
-			repo, err := gocart.NewRepository(subDir)
-			Expect(err).ToNot(HaveOccured())
+			repo, err := dependency_fetcher.NewRepository(subDir)
+			Expect(err).ToNot(HaveOccurred())
 
-			_, correctType := repo.(*gocart.HgRepository)
+			_, correctType := repo.(*dependency_fetcher.HgRepository)
 			Expect(correctType).To(BeTrue())
 		})
 	})

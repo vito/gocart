@@ -1,4 +1,4 @@
-package main_test
+package command_runner_test
 
 import (
 	. "github.com/onsi/ginkgo"
@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestGocart(t *testing.T) {
+func TestCommand_runner(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Gocart Suite")
+	RunSpecs(t, "Command_runner Suite")
 }

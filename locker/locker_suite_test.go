@@ -1,4 +1,4 @@
-package main_test
+package locker_test
 
 import (
 	. "github.com/onsi/ginkgo"
@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestGocart(t *testing.T) {
+func TestLock_merger(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Gocart Suite")
+	RunSpecs(t, "Locker Suite")
 }

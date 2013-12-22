@@ -1,4 +1,4 @@
-package gocart_test
+package command_runner_test
 
 import (
 	"bytes"
@@ -7,15 +7,15 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/vito/gocart"
+	"github.com/vito/gocart/command_runner"
 )
 
 var _ = Describe("Shell Command Runner", func() {
-	var runner *gocart.ShellCommandRunner
+	var runner *command_runner.ShellCommandRunner
 	var buffer *bytes.Buffer
 
 	BeforeEach(func() {
-		runner = &gocart.ShellCommandRunner{}
+		runner = command_runner.New()
 		buffer = &bytes.Buffer{}
 	})
 
@@ -30,7 +30,7 @@ var _ = Describe("Shell Command Runner", func() {
 		It("returns the errors from the command", func() {
 			cmd := exec.Command("adsfasdf")
 			err := runner.Run(cmd)
-			Expect(err).To(HaveOccured())
+			Expect(err).To(HaveOccurred())
 		})
 	})
 })

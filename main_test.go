@@ -8,13 +8,15 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
+	"strings"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/vito/cmdtest"
 	. "github.com/vito/cmdtest/matchers"
 
-	"github.com/vito/gocart"
+	"github.com/vito/gocart/dependency"
+	"github.com/vito/gocart/dependency_reader"
 )
 
 var currentDirectory,
@@ -30,7 +32,7 @@ func init() {
 	var err error
 
 	_, currentFile, _, _ := runtime.Caller(0)
-	currentDirectory = path.Dir(path.Dir(currentFile))
+	currentDirectory = path.Dir(currentFile)
 
 	destTmpDir, err := ioutil.TempDir(os.TempDir(), "wtf")
 	if err != nil {
@@ -116,7 +118,7 @@ func init() {
 }
 
 var _ = Describe("install", func() {
-	gocartPath, err := cmdtest.Build("github.com/vito/gocart/gocart")
+	gocartPath, err := cmdtest.Build("github.com/vito/gocart")
 	if err != nil {
 		panic(err)
 	}
@@ -241,25 +243,22 @@ var _ = Describe("install", func() {
 			lockFile, err := os.Open(lockFilePath)
 			Expect(err).ToNot(HaveOccurred())
 
-			reader := gocart.NewReader(lockFile)
+			reader := dependency_reader.New(lockFile)
 
 			dependencies, err := reader.ReadAll()
 			Expect(err).ToNot(HaveOccurred())
 
 			Expect(dependencies).To(HaveLen(2))
 
-			dependency0Version, err := dependencies[0].CurrentVersion(gopath)
-			Expect(err).ToNot(HaveOccurred())
+			dependency0Version := currentGitRevision(path.Join(gopath, "src", "github.com", "vito", "gocart"))
+			dependency1Version := currentHgRevision(path.Join(gopath, "src", "code.google.com", "p", "go.crypto", "ssh"))
 
-			dependency1Version, err := dependencies[1].CurrentVersion(gopath)
-			Expect(err).ToNot(HaveOccurred())
-
-			Expect(dependencies[0]).To(Equal(gocart.Dependency{
+			Expect(dependencies[0]).To(Equal(dependency.Dependency{
 				Path:    "github.com/vito/gocart",
 				Version: dependency0Version,
 			}))
 
-			Expect(dependencies[1]).To(Equal(gocart.Dependency{
+			Expect(dependencies[1]).To(Equal(dependency.Dependency{
 				Path:    "code.google.com/p/go.crypto/ssh",
 				Version: dependency1Version,
 			}))
@@ -292,7 +291,7 @@ var _ = Describe("install", func() {
 				lockFile, err := os.Open(lockFilePath)
 				Expect(err).ToNot(HaveOccurred())
 
-				reader := gocart.NewReader(lockFile)
+				reader := dependency_reader.New(lockFile)
 				dependencies, err := reader.ReadAll()
 				Expect(err).ToNot(HaveOccurred())
 
@@ -311,11 +310,11 @@ var _ = Describe("install", func() {
 				lockFile, err := os.Open(lockFilePath)
 				Expect(err).ToNot(HaveOccurred())
 
-				reader := gocart.NewReader(lockFile)
+				reader := dependency_reader.New(lockFile)
 				dependencies, err := reader.ReadAll()
 				Expect(err).ToNot(HaveOccurred())
 
-				Expect(dependencies).To(Equal([]gocart.Dependency{
+				Expect(dependencies).To(Equal([]dependency.Dependency{
 					{
 						Path:    "github.com/vito/gocart",
 						Version: "7c9d1a95d4b7979bc4180d4cb4aebfc036f276de",
@@ -356,6 +355,27 @@ func hgRevision(path string) *cmdtest.Session {
 	return sess
 }
 
+func currentGitRevision(path string) string {
+	sess := gitRevision(path, "HEAD")
+	Expect(sess).To(ExitWith(0))
+
+	return strings.Trim(string(sess.FullOutput()), "\n")
+}
+
+func currentBzrRevision(path string) string {
+	sess := bzrRevision(path)
+	Expect(sess).To(ExitWith(0))
+
+	return strings.Trim(string(sess.FullOutput()), "\n")
+}
+
+func currentHgRevision(path string) string {
+	sess := hgRevision(path)
+	Expect(sess).To(ExitWith(0))
+
+	return strings.Trim(string(sess.FullOutput()), "\n")
+}
+
 func listing(path string) *cmdtest.Session {
 	sess, err := cmdtest.Start(exec.Command("ls", path))
 	Expect(err).ToNot(HaveOccurred())
@@ -364,6 +384,8 @@ func listing(path string) *cmdtest.Session {
 }
 
 func walkTheDinosaur(src, dest string) error {
-	cp := exec.Command("cp", "-r", src, dest)
+	cp := exec.Command("cp", "-a", src, dest)
+	cp.Stdout = os.Stdout
+	cp.Stderr = os.Stderr
 	return cp.Run()
 }

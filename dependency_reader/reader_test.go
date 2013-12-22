@@ -1,4 +1,4 @@
-package gocart_test
+package dependency_reader_test
 
 import (
 	"io"
@@ -7,15 +7,16 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/vito/gocart"
+	"github.com/vito/gocart/dependency"
+	"github.com/vito/gocart/dependency_reader"
 )
 
 var _ = Describe("Cartridge Reader", func() {
-	var reader *gocart.Reader
+	var reader *dependency_reader.Reader
 	var inputReader io.Reader
 
 	JustBeforeEach(func() {
-		reader = gocart.NewReader(inputReader)
+		reader = dependency_reader.New(inputReader)
 	})
 
 	Context("with an empty input", func() {
@@ -25,7 +26,7 @@ var _ = Describe("Cartridge Reader", func() {
 
 		It("returns an empty dependency list", func() {
 			deps, err := reader.ReadAll()
-			Expect(err).ToNot(HaveOccured())
+			Expect(err).ToNot(HaveOccurred())
 			Expect(deps).To(BeEmpty())
 		})
 	})
@@ -39,10 +40,10 @@ var _ = Describe("Cartridge Reader", func() {
 
 		It("returns the single dependency", func() {
 			deps, err := reader.ReadAll()
-			Expect(err).ToNot(HaveOccured())
+			Expect(err).ToNot(HaveOccurred())
 
 			Expect(deps).To(HaveLen(1))
-			Expect(deps[0]).To(Equal(gocart.Dependency{
+			Expect(deps[0]).To(Equal(dependency.Dependency{
 				Path:    "github.com/xoebus/kingpin",
 				Version: "master",
 			}))
@@ -59,10 +60,10 @@ var _ = Describe("Cartridge Reader", func() {
 
 		It("returns the single dependency", func() {
 			deps, err := reader.ReadAll()
-			Expect(err).ToNot(HaveOccured())
+			Expect(err).ToNot(HaveOccurred())
 
 			Expect(deps).To(HaveLen(1))
-			Expect(deps[0]).To(Equal(gocart.Dependency{
+			Expect(deps[0]).To(Equal(dependency.Dependency{
 				Path:    "github.com/xoebus/kingpin",
 				Version: "master",
 			}))
@@ -79,14 +80,14 @@ var _ = Describe("Cartridge Reader", func() {
 
 		It("returns the dependencies in order", func() {
 			deps, err := reader.ReadAll()
-			Expect(err).ToNot(HaveOccured())
+			Expect(err).ToNot(HaveOccurred())
 
 			Expect(deps).To(HaveLen(2))
-			Expect(deps[0]).To(Equal(gocart.Dependency{
+			Expect(deps[0]).To(Equal(dependency.Dependency{
 				Path:    "github.com/xoebus/kingpin",
 				Version: "master",
 			}))
-			Expect(deps[1]).To(Equal(gocart.Dependency{
+			Expect(deps[1]).To(Equal(dependency.Dependency{
 				Path:    "github.com/vito/gocart",
 				Version: "v1.0",
 			}))
@@ -104,14 +105,14 @@ var _ = Describe("Cartridge Reader", func() {
 
 		It("returns the dependencies in order", func() {
 			deps, err := reader.ReadAll()
-			Expect(err).ToNot(HaveOccured())
+			Expect(err).ToNot(HaveOccurred())
 
 			Expect(deps).To(HaveLen(2))
-			Expect(deps[0]).To(Equal(gocart.Dependency{
+			Expect(deps[0]).To(Equal(dependency.Dependency{
 				Path:    "github.com/xoebus/kingpin",
 				Version: "master",
 			}))
-			Expect(deps[1]).To(Equal(gocart.Dependency{
+			Expect(deps[1]).To(Equal(dependency.Dependency{
 				Path:    "github.com/vito/gocart",
 				Version: "v1.0",
 			}))
@@ -125,7 +126,7 @@ var _ = Describe("Cartridge Reader", func() {
 
 		It("ignores the comment and returns an empty dependency list", func() {
 			deps, err := reader.ReadAll()
-			Expect(err).ToNot(HaveOccured())
+			Expect(err).ToNot(HaveOccurred())
 			Expect(deps).To(BeEmpty())
 		})
 	})
@@ -145,14 +146,14 @@ var _ = Describe("Cartridge Reader", func() {
 
 		It("returns the dependencies in order", func() {
 			deps, err := reader.ReadAll()
-			Expect(err).ToNot(HaveOccured())
+			Expect(err).ToNot(HaveOccurred())
 
 			Expect(deps).To(HaveLen(2))
-			Expect(deps[0]).To(Equal(gocart.Dependency{
+			Expect(deps[0]).To(Equal(dependency.Dependency{
 				Path:    "github.com/xoebus/kingpin",
 				Version: "master",
 			}))
-			Expect(deps[1]).To(Equal(gocart.Dependency{
+			Expect(deps[1]).To(Equal(dependency.Dependency{
 				Path:    "github.com/vito/gocart",
 				Version: "v1.0",
 			}))
@@ -177,7 +178,7 @@ var _ = Describe("Cartridge Reader", func() {
 
 		It("returns an errors", func() {
 			_, err := reader.ReadAll()
-			Expect(err).To(HaveOccured())
+			Expect(err).To(HaveOccurred())
 		})
 
 		It("returns the dependencies in order up until the error", func() {

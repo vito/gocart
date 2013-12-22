@@ -1,4 +1,4 @@
-package gocart
+package gopath
 
 import (
 	"errors"
