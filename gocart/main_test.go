@@ -170,7 +170,7 @@ var _ = Describe("install", func() {
 
 			dependencyPath := path.Join(gopath, "src", "github.com", "vito", "gocart")
 
-			Expect(listing(dependencyPath)).To(ExitWith(1))
+			Expect(listing(dependencyPath)).ToNot(ExitWith(0))
 
 			install()
 
@@ -192,7 +192,7 @@ var _ = Describe("install", func() {
 
 			dependencyPath := path.Join(gopath, "src", "launchpad.net", "gocheck")
 
-			Expect(listing(dependencyPath)).To(ExitWith(1))
+			Expect(listing(dependencyPath)).ToNot(ExitWith(0))
 
 			install()
 
@@ -214,7 +214,7 @@ var _ = Describe("install", func() {
 
 			dependencyPath := path.Join(gopath, "src", "code.google.com", "p", "go.crypto", "ssh")
 
-			Expect(listing(dependencyPath)).To(ExitWith(1))
+			Expect(listing(dependencyPath)).ToNot(ExitWith(0))
 
 			install()
 
