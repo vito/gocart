@@ -6,7 +6,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/xoebus/gocart/fakes"
+	"github.com/vito/gocart/fakes"
 )
 
 var _ = Describe("Dependency Fetcher", func() {
@@ -17,7 +17,7 @@ var _ = Describe("Dependency Fetcher", func() {
 
 	BeforeEach(func() {
 		dependency = Dependency{
-			Path:    "github.com/xoebus/gocart",
+			Path:    "github.com/vito/gocart",
 			Version: "v1.2",
 		}
 		runner = &fakes.FakeCommandRunner{}

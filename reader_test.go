@@ -71,7 +71,7 @@ var _ = Describe("Cartridge Reader", func() {
 		BeforeEach(func() {
 			inputReader = strings.NewReader(
 				`github.com/xoebus/kingpin master
-				github.com/xoebus/gocart v1.0`,
+				github.com/vito/gocart v1.0`,
 			)
 		})
 
@@ -85,7 +85,7 @@ var _ = Describe("Cartridge Reader", func() {
 				Version: "master",
 			}))
 			Expect(deps[1]).To(Equal(Dependency{
-				Path:    "github.com/xoebus/gocart",
+				Path:    "github.com/vito/gocart",
 				Version: "v1.0",
 			}))
 		})
@@ -95,7 +95,7 @@ var _ = Describe("Cartridge Reader", func() {
 		BeforeEach(func() {
 			inputReader = strings.NewReader(
 				`github.com/xoebus/kingpin master
-				github.com/xoebus/gocart v1.0
+				github.com/vito/gocart v1.0
 				`,
 			)
 		})
@@ -110,7 +110,7 @@ var _ = Describe("Cartridge Reader", func() {
 				Version: "master",
 			}))
 			Expect(deps[1]).To(Equal(Dependency{
-				Path:    "github.com/xoebus/gocart",
+				Path:    "github.com/vito/gocart",
 				Version: "v1.0",
 			}))
 		})
@@ -136,7 +136,7 @@ var _ = Describe("Cartridge Reader", func() {
 				github.com/xoebus/kingpin master
 
 				# Bars
-				github.com/xoebus/gocart v1.0
+				github.com/vito/gocart v1.0
 				`,
 			)
 		})
@@ -151,7 +151,7 @@ var _ = Describe("Cartridge Reader", func() {
 				Version: "master",
 			}))
 			Expect(deps[1]).To(Equal(Dependency{
-				Path:    "github.com/xoebus/gocart",
+				Path:    "github.com/vito/gocart",
 				Version: "v1.0",
 			}))
 		})
@@ -165,7 +165,7 @@ var _ = Describe("Cartridge Reader", func() {
 				github.com/xoebus/kingpin master
 
 				# Bars
-				github.com/xoebus/gocart v1.0
+				github.com/vito/gocart v1.0
 
 				# Errors
 				github.com/xoebus has too many versions

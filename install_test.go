@@ -272,7 +272,7 @@ func (s *InstallSuite) TestInstallWithoutLockFileGeneratesLockFile() {
 	s.Nil(err)
 
 	s.Equal(dependencies[0], Dependency{
-		Path:    "github.com/xoebus/gocart",
+		Path:    "github.com/vito/gocart",
 		Version: dependency0Version,
 	})
 
@@ -342,7 +342,7 @@ func (s *InstallSuite) TestInstallWithLockFileWithRemovedDependencies() {
 	if len(dependencies) == 1 {
 		s.Equal(
 			Dependency{
-				Path:    "github.com/xoebus/gocart",
+				Path:    "github.com/vito/gocart",
 				Version: "7c9d1a95d4b7979bc4180d4cb4aebfc036f276de",
 			},
 			dependencies[0],
