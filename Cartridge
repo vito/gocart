@@ -1,3 +1,4 @@
 # Testing
-github.com/onsi/ginkgo              master
-github.com/onsi/gomega              master
+github.com/onsi/ginkgo   master
+github.com/onsi/gomega   master
+github.com/vito/cmdtest  master
