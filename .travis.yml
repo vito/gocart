@@ -3,7 +3,9 @@ go:
   - 1.2
 
 install:
-  - go get -t -v ./...
+  - go install ./gocart
+  - gocart
+  - go install github.com/onsi/ginkgo/ginkgo
 
 script:
   - ginkgo -r -i -v
