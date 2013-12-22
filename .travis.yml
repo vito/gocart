@@ -3,9 +3,11 @@ go:
   - 1.2
 
 install:
+  - export PATH=$HOME/gopath/bin:$PATH
   - go install ./gocart
   - gocart
   - go install github.com/onsi/ginkgo/ginkgo
 
 script:
+  - export PATH=$HOME/gopath/bin:$PATH
   - ginkgo -r -i -v
