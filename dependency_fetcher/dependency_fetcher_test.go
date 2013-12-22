@@ -43,15 +43,6 @@ var _ = Describe("Dependency Fetcher", func() {
 			Expect(args).To(ContainSubstring("get -u -d -v " + dependency.Path))
 		})
 
-		It("pipes the command's stdout, stdin, and stderr to the user", func() {
-			_, err := fetcher.Fetch(dependency)
-			Expect(err).ToNot(HaveOccurred())
-
-			Expect(runner.ExecutedCommands()[0].Stdin).To(Equal(os.Stdin))
-			Expect(runner.ExecutedCommands()[0].Stdout).To(Equal(os.Stdout))
-			Expect(runner.ExecutedCommands()[0].Stderr).To(Equal(os.Stderr))
-		})
-
 		It("changes the repository version to be the version specified in the dependency", func() {
 			_, err := fetcher.Fetch(dependency)
 			Expect(err).ToNot(HaveOccurred())
@@ -63,15 +54,6 @@ var _ = Describe("Dependency Fetcher", func() {
 			Expect(args[0]).To(Equal("git"))
 			Expect(args[1]).To(Equal("checkout"))
 			Expect(args[2]).To(Equal("v1.2"))
-		})
-
-		It("pipes the command's stdout, stdin, and stderr to the user for the second command", func() {
-			_, err := fetcher.Fetch(dependency)
-			Expect(err).ToNot(HaveOccurred())
-
-			Expect(runner.ExecutedCommands()[1].Stdin).To(Equal(os.Stdin))
-			Expect(runner.ExecutedCommands()[1].Stdout).To(Equal(os.Stdout))
-			Expect(runner.ExecutedCommands()[1].Stderr).To(Equal(os.Stderr))
 		})
 
 		It("returns the fetched dependency", func() {
