@@ -1,13 +1,13 @@
-package gocart
+package gocart_test
 
 import (
-	"testing"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"testing"
 )
 
-func Test(t *testing.T) {
+func TestGocart(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Gocart")
+	RunSpecs(t, "Gocart Suite")
 }

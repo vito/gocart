@@ -1,8 +1,10 @@
 package gocart
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -43,12 +45,17 @@ func (d Dependency) CurrentVersion(gopath string) (string, error) {
 
 	version.Dir = repoPath
 
-	out, err := version.CombinedOutput()
+	outBuf := new(bytes.Buffer)
+
+	version.Stdout = outBuf
+	version.Stderr = ioutil.Discard
+
+	err := version.Run()
 	if err != nil {
 		return "", err
 	}
 
-	return strings.Trim(string(out), "\n"), nil
+	return strings.Trim(string(outBuf.Bytes()), "\n"), nil
 }
 
 func (d Dependency) FullPath(gopath string) string {
