@@ -40,8 +40,6 @@ func main() {
 }
 
 func install() {
-	fmt.Println("Installing dependencies...")
-
 	requestedDependencies := loadFile(CartridgeFile)
 	lockedDependencies := loadFile(CartridgeLockFile)
 
@@ -58,9 +56,7 @@ func install() {
 	}
 	defer file.Close()
 
-	out := io.MultiWriter(file, os.Stdout)
-
-	err = updateLockFile(out, newLockedDependencies)
+	err = updateLockFile(file, newLockedDependencies)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -129,6 +125,9 @@ func installDependencies(dependencies []dependency.Dependency) ([]dependency.Dep
 	}
 
 	for _, dep := range dependencies {
+		fmt.Println("fetching", dep.Path)
+		fmt.Println("  at", dep.Version)
+
 		lockedDependency, err := fetcher.Fetch(dep)
 		if err != nil {
 			return []dependency.Dependency{}, err

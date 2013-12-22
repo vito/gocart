@@ -31,7 +31,6 @@ func New(runner command_runner.CommandRunner) (*DependencyFetcher, error) {
 
 func (f *DependencyFetcher) Fetch(dependency dependency.Dependency) (dependency.Dependency, error) {
 	cmd := exec.Command("go", "get", "-u", "-d", "-v", dependency.Path)
-	f.redirectIO(cmd)
 
 	err := f.commandRunner.Run(cmd)
 	if err != nil {
@@ -45,7 +44,6 @@ func (f *DependencyFetcher) Fetch(dependency dependency.Dependency) (dependency.
 
 	cmd = repo.CheckoutCommand(dependency.Version)
 	cmd.Dir = dependency.FullPath(f.gopath)
-	f.redirectIO(cmd)
 
 	err = f.commandRunner.Run(cmd)
 	if err != nil {
@@ -68,10 +66,4 @@ func (f *DependencyFetcher) Fetch(dependency dependency.Dependency) (dependency.
 	dependency.Version = strings.Trim(string(outBuf.Bytes()), "\n")
 
 	return dependency, nil
-}
-
-func (f *DependencyFetcher) redirectIO(cmd *exec.Cmd) {
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Stdin = os.Stdin
 }
