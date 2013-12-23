@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/vito/gocart/command_runner"
 	"github.com/vito/gocart/dependency"
@@ -61,7 +62,7 @@ func install() {
 		log.Fatal(err)
 	}
 
-	fmt.Println("OK")
+	fmt.Println("\x1b[32mOK\x1b[0m")
 }
 
 func help() {
@@ -124,9 +125,16 @@ func installDependencies(dependencies []dependency.Dependency) ([]dependency.Dep
 		return []dependency.Dependency{}, err
 	}
 
+	maxWidth := 0
+
 	for _, dep := range dependencies {
-		fmt.Println("fetching", dep.Path)
-		fmt.Println("  at", dep.Version)
+		if len(dep.Path) > maxWidth {
+			maxWidth = len(dep.Path)
+		}
+	}
+
+	for _, dep := range dependencies {
+		fmt.Println("\x1b[1m" + dep.Path + "\x1b[0m" + strings.Repeat(" ", maxWidth-len(dep.Path)+2) + "\x1b[36m" + dep.Version + "\x1b[0m")
 
 		lockedDependency, err := fetcher.Fetch(dep)
 		if err != nil {
