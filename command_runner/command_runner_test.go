@@ -32,5 +32,14 @@ var _ = Describe("Shell Command Runner", func() {
 			err := runner.Run(cmd)
 			Expect(err).To(HaveOccurred())
 		})
+
+		It("returns the command's stdout and stderr in the error", func() {
+			cmd := exec.Command("bash", "-c", "echo out; echo err 1>&2; exit 1")
+			err := runner.Run(cmd)
+			Expect(err.Error()).To(ContainSubstring("exit status 1"))
+			Expect(err.Error()).To(ContainSubstring("bash -c"))
+			Expect(err.Error()).To(ContainSubstring("stdout: out"))
+			Expect(err.Error()).To(ContainSubstring("stderr: err"))
+		})
 	})
 })
