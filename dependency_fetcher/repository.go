@@ -9,38 +9,30 @@ import (
 
 type Repository interface {
 	CheckoutCommand(version string) *exec.Cmd
+	UpdateCommand() *exec.Cmd
 	CurrentVersionCommand() *exec.Cmd
 }
 
 var UnknownRepositoryType = errors.New("unknown repository type")
 
 func NewRepository(repoPath string) (Repository, error) {
-	if checkForDir(repoPath, ".git") {
+	gitDepth := checkForDir(repoPath, ".git", 0)
+	hgDepth := checkForDir(repoPath, ".hg", 0)
+	bzrDepth := checkForDir(repoPath, ".bzr", 0)
+
+	if gitDepth < hgDepth && gitDepth < bzrDepth {
 		return &GitRepository{}, nil
 	}
 
-	if checkForDir(repoPath, ".hg") {
+	if hgDepth < gitDepth && hgDepth < bzrDepth {
 		return &HgRepository{}, nil
 	}
 
-	if checkForDir(repoPath, ".bzr") {
+	if bzrDepth < gitDepth && bzrDepth < hgDepth {
 		return &BzrRepository{}, nil
 	}
 
 	return nil, UnknownRepositoryType
-}
-
-func checkForDir(root, dir string) bool {
-	if root == "/" {
-		return false
-	}
-
-	_, err := os.Stat(path.Join(root, dir))
-	if err == nil {
-		return true
-	}
-
-	return findDirectory(path.Dir(root), dir)
 }
 
 type GitRepository struct{}
@@ -53,6 +45,10 @@ func (repo *GitRepository) CurrentVersionCommand() *exec.Cmd {
 	return exec.Command("git", "rev-parse", "HEAD")
 }
 
+func (repo *GitRepository) UpdateCommand() *exec.Cmd {
+	return exec.Command("git", "fetch")
+}
+
 type HgRepository struct{}
 
 func (repo *HgRepository) CheckoutCommand(version string) *exec.Cmd {
@@ -61,6 +57,10 @@ func (repo *HgRepository) CheckoutCommand(version string) *exec.Cmd {
 
 func (repo *HgRepository) CurrentVersionCommand() *exec.Cmd {
 	return exec.Command("hg", "id", "-i")
+}
+
+func (repo *HgRepository) UpdateCommand() *exec.Cmd {
+	return exec.Command("hg", "pull")
 }
 
 type BzrRepository struct{}
@@ -73,15 +73,19 @@ func (repo *BzrRepository) CurrentVersionCommand() *exec.Cmd {
 	return exec.Command("bzr", "revno", "--tree")
 }
 
-func findDirectory(root, dir string) bool {
+func (repo *BzrRepository) UpdateCommand() *exec.Cmd {
+	return exec.Command("bzr", "pull")
+}
+
+func checkForDir(root, dir string, depth int) int {
 	if root == "/" {
-		return false
+		return depth
 	}
 
 	_, err := os.Stat(path.Join(root, dir))
 	if err == nil {
-		return true
+		return depth
 	}
 
-	return findDirectory(path.Dir(root), dir)
+	return checkForDir(path.Dir(root), dir, depth+1)
 }

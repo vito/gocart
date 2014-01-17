@@ -40,7 +40,16 @@ var _ = Describe("Dependency Fetcher", func() {
 
 			args := strings.Join(runner.ExecutedCommands()[0].Args, " ")
 			Expect(runner.ExecutedCommands()[0].Path).To(MatchRegexp(".*/go"))
-			Expect(args).To(ContainSubstring("get -u -d -v " + dependency.Path))
+			Expect(args).To(ContainSubstring("get -d -v " + dependency.Path))
+		})
+
+		It("updates the repository", func() {
+			_, err := fetcher.Fetch(dependency)
+			Expect(err).ToNot(HaveOccurred())
+
+			args := strings.Join(runner.ExecutedCommands()[1].Args, " ")
+			Expect(runner.ExecutedCommands()[1].Path).To(MatchRegexp(".*/git"))
+			Expect(args).To(ContainSubstring("fetch"))
 		})
 
 		It("changes the repository version to be the version specified in the dependency", func() {
@@ -49,8 +58,8 @@ var _ = Describe("Dependency Fetcher", func() {
 
 			gopath, _ := gopath.InstallationDirectory(os.Getenv("GOPATH"))
 
-			args := runner.ExecutedCommands()[1].Args
-			Expect(runner.ExecutedCommands()[1].Dir).To(Equal(dependency.FullPath(gopath)))
+			args := runner.ExecutedCommands()[2].Args
+			Expect(runner.ExecutedCommands()[2].Dir).To(Equal(dependency.FullPath(gopath)))
 			Expect(args[0]).To(Equal("git"))
 			Expect(args[1]).To(Equal("checkout"))
 			Expect(args[2]).To(Equal("v1.2"))
