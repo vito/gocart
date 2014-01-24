@@ -140,25 +140,36 @@ func install(root string, recursive bool, aggregate bool, trickleDown bool, dept
 }
 
 func check(root string) {
+	dirtyDependencies := findDirtyDependencies(root)
+
+	if len(dirtyDependencies) > 0 {
+		for dep := range dirtyDependencies {
+			fmt.Println(bold("dirty dependency:"), dep)
+		}
+
+		os.Exit(1)
+	}
+}
+
+func findDirtyDependencies(root string) map[string]bool {
 	requestedDependencies := loadFile(path.Join(root, CartridgeFile))
 	lockedDependencies := loadFile(path.Join(root, CartridgeLockFile))
 
 	dependencies := locker.GenerateLock(requestedDependencies, lockedDependencies)
 
-	dirtyDependencies := []dependency.Dependency{}
+	dirtyDependencies := make(map[string]bool)
+
 	for _, dep := range dependencies {
 		if checkForDirtyState(dep) {
-			dirtyDependencies = append(dirtyDependencies, dep)
+			dirtyDependencies[dep.FullPath(GOPATH)] = true
+		}
+
+		for dep, _ := range findDirtyDependencies(dep.FullPath(GOPATH)) {
+			dirtyDependencies[dep] = true
 		}
 	}
 
-	if len(dirtyDependencies) > 0 {
-		for _, dep := range dirtyDependencies {
-			fmt.Println(bold("dirty dependency:"), dep.FullPath(GOPATH))
-		}
-
-		os.Exit(1)
-	}
+	return dirtyDependencies
 }
 
 func help() {

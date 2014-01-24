@@ -457,7 +457,7 @@ var _ = Describe("install", func() {
 	})
 })
 
-var _ = FDescribe("check", func() {
+var _ = Describe("check", func() {
 	gocartPath, err := cmdtest.Build("github.com/vito/gocart")
 	if err != nil {
 		panic(err)
@@ -544,6 +544,19 @@ var _ = FDescribe("check", func() {
 			})
 		})
 	}
+
+	Context("with recursive dependencies", func() {
+		BeforeEach(func() {
+			installCmd.Args = append([]string{installCmd.Args[0], "-r"}, installCmd.Args[1:]...)
+
+			installCmd.Dir = fakeUnlockedRepoWithRecursiveDependencies
+			checkCmd.Dir = fakeUnlockedRepoWithRecursiveDependencies
+
+			install()
+		})
+
+		itCorrectlyDetectsDirtyDependency("github.com", "onsi", "ginkgo")
+	})
 
 	Context("with a git dependency", func() {
 		BeforeEach(func() {
