@@ -26,7 +26,9 @@ var currentDirectory,
 	fakeLockedGitRepoWithNewDepPath,
 	fakeLockedGitRepoWithRemovedDepPath,
 	fakeHgRepoPath, fakeHgRepoWithRevisionPath,
-	fakeBzrRepoPath, fakeBzrRepoWithRevisionPath string
+	fakeBzrRepoPath, fakeBzrRepoWithRevisionPath,
+	fakeUnlockedRepoWithRecursiveDependencies,
+	fakeUnlockedRepoWithRecursiveConflictingDependencies string
 
 func init() {
 	var err error
@@ -111,6 +113,20 @@ func init() {
 
 	fakeHgRepoWithRevisionPath, err = filepath.Abs(
 		path.Join(gocartDir, "fixtures", "fake_hg_repo_with_revision"),
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	fakeUnlockedRepoWithRecursiveDependencies, err = filepath.Abs(
+		path.Join(gocartDir, "fixtures", "fake_recursive_repo"),
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	fakeUnlockedRepoWithRecursiveConflictingDependencies, err = filepath.Abs(
+		path.Join(gocartDir, "fixtures", "fake_recursive_repo_with_conflicting_dependencies"),
 	)
 	if err != nil {
 		panic(err)
@@ -320,6 +336,97 @@ var _ = Describe("install", func() {
 						Version: "7c9d1a95d4b7979bc4180d4cb4aebfc036f276de",
 					},
 				}))
+			})
+		})
+	})
+
+	Context("when we are recursive when we are recursive when we are", func() {
+		BeforeEach(func() {
+			installCmd.Args = append([]string{installCmd.Args[0], "-r"}, installCmd.Args[1:]...)
+		})
+
+		It("recursively installs dependencies", func() {
+			installCmd.Dir = fakeUnlockedRepoWithRecursiveDependencies
+
+			sess := installing()
+			Expect(sess).To(Say("github.com/vito/gocart"))
+			Expect(sess).To(Say("origin/master"))
+			Expect(sess).To(Say("github.com/onsi/ginkgo"))
+			Expect(sess).To(Say("9019392d862065b9f2c4461623bd0d1abfd5f435"))
+			Expect(sess).To(Say("github.com/onsi/gomega"))
+			Expect(sess).To(Say("82aceb33958ceb2758ee32204e02e681d483423c"))
+			Expect(sess).To(Say("OK"))
+			Expect(sess).To(ExitWith(0))
+		})
+
+		It("checks for conflicting dependencies (different SHAs)", func() {
+			installCmd.Dir = fakeUnlockedRepoWithRecursiveConflictingDependencies
+
+			sess := installing()
+			Expect(sess).To(SayError("conflict"))
+			Expect(sess).ToNot(ExitWith(0))
+		})
+
+		Context("with -a (for aggregate)", func() {
+			BeforeEach(func() {
+				installCmd.Args = append([]string{installCmd.Args[0], "-a"}, installCmd.Args[1:]...)
+			})
+
+			It("should collect all the dependencies into a giant .lock file", func() {
+				installCmd.Dir = fakeUnlockedRepoWithRecursiveDependencies
+
+				install()
+
+				lockFilePath := path.Join(installCmd.Dir, "Cartridge.lock")
+				lockFile, err := os.Open(lockFilePath)
+				Expect(err).ToNot(HaveOccurred())
+
+				reader := dependency_reader.New(lockFile)
+				dependencies, err := reader.ReadAll()
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(dependencies).To(HaveLen(4))
+			})
+		})
+
+		Context("with -t (for trickledown)", func() {
+			BeforeEach(func() {
+				installCmd.Args = append([]string{installCmd.Args[0], "-t"}, installCmd.Args[1:]...)
+			})
+
+			It("should enforce dependencies that are defined in the top level cartridge", func() {
+				installCmd.Dir = fakeUnlockedRepoWithRecursiveConflictingDependencies
+
+				install()
+
+				lockFilePath := path.Join(gopath, "src", "github.com", "vito", "gocart", "Cartridge.lock")
+				lockFile, err := os.Open(lockFilePath)
+				Expect(err).ToNot(HaveOccurred())
+
+				reader := dependency_reader.New(lockFile)
+				dependencies, err := reader.ReadAll()
+				Expect(err).ToNot(HaveOccurred())
+
+				Expect(dependencies).To(ContainElement(
+					dependency.Dependency{
+						Path:    "github.com/onsi/ginkgo",
+						Version: "ed2674365250adb1cae3038ee49a2d8d87a8e4c7",
+					},
+				))
+
+				Expect(dependencies).To(ContainElement(
+					dependency.Dependency{
+						Path:    "github.com/onsi/gomega",
+						Version: "af00a096625b2a4621cbe96590d2478c906acbd1",
+					},
+				))
+
+				Expect(dependencies).To(ContainElement(
+					dependency.Dependency{
+						Path:    "github.com/vito/cmdtest",
+						Version: "9193198ec4ce39c99cb25b64f94dea5b5b924e68",
+					},
+				))
 			})
 		})
 	})
