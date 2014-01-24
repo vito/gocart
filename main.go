@@ -239,6 +239,10 @@ func loadFile(fileName string) []dependency.Dependency {
 func checkForDirtyState(dep dependency.Dependency) bool {
 	repoPath := dep.FullPath(GOPATH)
 
+	if _, err := os.Stat(repoPath); os.IsNotExist(err) {
+		return false
+	}
+
 	repo, err := dependency_fetcher.NewRepository(repoPath)
 	if err != nil {
 		fatal(err.Error())

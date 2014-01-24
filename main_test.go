@@ -545,6 +545,19 @@ var _ = Describe("check", func() {
 		})
 	}
 
+	Context("when the dependencies are not on disk", func() {
+		BeforeEach(func() {
+			checkCmd.Dir = fakeGitRepoPath
+
+			// don't install
+		})
+
+		It("exits 0", func() {
+			check := checking()
+			Expect(check).To(ExitWith(0))
+		})
+	})
+
 	Context("with recursive dependencies", func() {
 		BeforeEach(func() {
 			installCmd.Args = append([]string{installCmd.Args[0], "-r"}, installCmd.Args[1:]...)
