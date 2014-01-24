@@ -558,6 +558,42 @@ var _ = Describe("check", func() {
 		})
 	})
 
+	Context("when the repo is on a different revision", func() {
+		var repoPath string
+
+		BeforeEach(func() {
+			installCmd.Dir = fakeGitRepoPath
+			checkCmd.Dir = fakeGitRepoPath
+
+			install()
+
+			repoPath = path.Join(gopath, "src", "github.com", "vito", "gocart")
+
+			file, err := os.Create(path.Join(repoPath, "butts"))
+			Ω(err).ShouldNot(HaveOccurred())
+
+			file.Close()
+
+			add := exec.Command("git", "add", "butts")
+			add.Dir = repoPath
+
+			err = add.Run()
+			Ω(err).ShouldNot(HaveOccurred())
+
+			commit := exec.Command("git", "commit", "-m", "touch butts")
+			commit.Dir = repoPath
+
+			err = commit.Run()
+			Ω(err).ShouldNot(HaveOccurred())
+		})
+
+		It("reports it as dirty", func() {
+			check := checking()
+			Expect(check).To(Say(repoPath))
+			Expect(check).To(ExitWith(1))
+		})
+	})
+
 	Context("with recursive dependencies", func() {
 		BeforeEach(func() {
 			installCmd.Args = append([]string{installCmd.Args[0], "-r"}, installCmd.Args[1:]...)

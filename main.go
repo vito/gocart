@@ -248,8 +248,19 @@ func checkForDirtyState(dep dependency.Dependency) bool {
 		fatal(err.Error())
 	}
 
-	status := repo.StatusCommand()
+	current := repo.CurrentVersionCommand()
+	current.Dir = repoPath
 
+	currentVersion, err := current.CombinedOutput()
+	if err != nil {
+		fatal(err.Error())
+	}
+
+	if strings.Trim(string(currentVersion), " \n") != dep.Version {
+		return true
+	}
+
+	status := repo.StatusCommand()
 	status.Dir = repoPath
 
 	output, err := status.CombinedOutput()
