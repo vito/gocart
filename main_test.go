@@ -427,6 +427,21 @@ var _ = Describe("install", func() {
 						Version: "9193198ec4ce39c99cb25b64f94dea5b5b924e68",
 					},
 				))
+
+				Expect(gitRevision(
+					path.Join(gopath, "src", "github.com", "onsi", "ginkgo"),
+					"HEAD",
+				)).To(Say("ed2674365250adb1cae3038ee49a2d8d87a8e4c7"))
+
+				Expect(gitRevision(
+					path.Join(gopath, "src", "github.com", "onsi", "gomega"),
+					"HEAD",
+				)).To(Say("af00a096625b2a4621cbe96590d2478c906acbd1"))
+
+				Expect(gitRevision(
+					path.Join(gopath, "src", "github.com", "vito", "cmdtest"),
+					"HEAD",
+				)).To(Say("9193198ec4ce39c99cb25b64f94dea5b5b924e68"))
 			})
 		})
 	})

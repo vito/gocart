@@ -207,19 +207,19 @@ func installDependencies(dependencies []dependency.Dependency, recursive bool, t
 	for _, dep := range dependencies {
 		fmt.Println("\x1b[1m" + dep.Path + "\x1b[0m" + strings.Repeat(" ", maxWidth-len(dep.Path)+2) + "\x1b[36m" + dep.Version + "\x1b[0m")
 
+		trickled, found := TrickleDownDependencies[dep.Path]
+		if found {
+			dep = trickled
+		}
+
 		lockedDependency, err := fetcher.Fetch(dep)
 		if err != nil {
 			return []dependency.Dependency{}, err
 		}
 
-		trickled, found := TrickleDownDependencies[lockedDependency.Path]
-		if found {
-			lockedDependency.Version = trickled.Version
-		} else {
-			currentVersion, found := FetchedDependencies[lockedDependency.Path]
-			if found && currentVersion.Version != lockedDependency.Version {
-				log.Fatalln("version conflict for", currentVersion.Path)
-			}
+		currentVersion, found := FetchedDependencies[lockedDependency.Path]
+		if found && currentVersion.Version != lockedDependency.Version {
+			log.Fatalln("version conflict for", currentVersion.Path)
 		}
 
 		FetchedDependencies[lockedDependency.Path] = lockedDependency
