@@ -139,9 +139,20 @@ func help() {
 
 Usage:
 
-    'gocart install' or 'gocart':
-        Install dependencies described by Cartridge.lock or Cartridge, and
-        update Cartridge.lock with locked-down dependency versions.
+  'gocart':
+    Install dependencies described by Cartridge.lock or Cartridge, and
+    update Cartridge.lock with locked-down dependency versions.
+
+    The following flags are handled:
+
+      -r: (recurse) if each dependency has a Cartridge, recursively run
+          gocart for it as well
+
+      -t: (trickle down) with -r, override lower-level dependencies with
+          root dependencies
+
+      -a: (aggregate) with -r, collect all recursive dependencies into the
+          top level lockfile
 
 Place your dependencies in a file called Cartridge with this format:
 
