@@ -357,6 +357,16 @@ var _ = Describe("install", func() {
 			Expect(sess).To(Say("82aceb33958ceb2758ee32204e02e681d483423c"))
 			Expect(sess).To(Say("OK"))
 			Expect(sess).To(ExitWith(0))
+
+			Expect(gitRevision(
+				path.Join(gopath, "src", "github.com", "onsi", "ginkgo"),
+				"HEAD",
+			)).To(Say("9019392d862065b9f2c4461623bd0d1abfd5f435"))
+
+			Expect(gitRevision(
+				path.Join(gopath, "src", "github.com", "onsi", "gomega"),
+				"HEAD",
+			)).To(Say("82aceb33958ceb2758ee32204e02e681d483423c"))
 		})
 
 		It("checks for conflicting dependencies (different SHAs)", func() {

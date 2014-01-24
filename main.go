@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path"
 	"strings"
@@ -21,6 +20,8 @@ const GocartVersion = "0.1.0"
 
 const CartridgeFile = "Cartridge"
 const CartridgeLockFile = "Cartridge.lock"
+
+var GOPATH string
 
 var FetchedDependencies = make(map[string]dependency.Dependency)
 var TrickleDownDependencies = make(map[string]dependency.Dependency)
@@ -62,6 +63,13 @@ func main() {
 
 	command := ""
 
+	gopath, err := gopath.InstallationDirectory(os.Getenv("GOPATH"))
+	if err != nil {
+		fatal("GOPATH is not set.")
+	}
+
+	GOPATH = gopath
+
 	if len(args) == 0 {
 		command = "install"
 	} else {
@@ -100,12 +108,12 @@ func install(root string, recursive bool, aggregate bool, trickleDown bool, dept
 
 	newLockedDependencies, err := installDependencies(dependencies, recursive, trickleDown, depth)
 	if err != nil {
-		log.Fatal(err)
+		fatal(err.Error())
 	}
 
 	file, err := os.Create(path.Join(root, "Cartridge.lock"))
 	if err != nil {
-		log.Fatal(err)
+		fatal(err.Error())
 	}
 	defer file.Close()
 
@@ -121,7 +129,7 @@ func install(root string, recursive bool, aggregate bool, trickleDown bool, dept
 
 	err = updateLockFile(file, dependenciesToBeWritten)
 	if err != nil {
-		log.Fatal(err)
+		fatal(err.Error())
 	}
 
 	if depth == 0 {
@@ -173,7 +181,7 @@ func loadFile(fileName string) []dependency.Dependency {
 
 	dependencies, err := reader.ReadAll()
 	if err != nil {
-		log.Fatal(err)
+		fatal(err.Error())
 	}
 
 	return dependencies
@@ -197,30 +205,19 @@ func installDependencies(dependencies []dependency.Dependency, recursive bool, t
 		}
 	}
 
-	gopath, err := gopath.InstallationDirectory(os.Getenv("GOPATH"))
-	if err != nil {
-		return nil, err
-	}
-
 	nextLevel := []dependency.Dependency{}
 
 	for _, dep := range dependencies {
-		fmt.Println("\x1b[1m" + dep.Path + "\x1b[0m" + strings.Repeat(" ", maxWidth-len(dep.Path)+2) + "\x1b[36m" + dep.Version + "\x1b[0m")
+		fmt.Println(bold(dep.Path) + padding(maxWidth-len(dep.Path)+2) + cyan(dep.Version))
 
-		trickled, found := TrickleDownDependencies[dep.Path]
-		if found {
-			dep = trickled
-		}
+		dep = trickledDown(dep)
 
 		lockedDependency, err := fetcher.Fetch(dep)
 		if err != nil {
 			return []dependency.Dependency{}, err
 		}
 
-		currentVersion, found := FetchedDependencies[lockedDependency.Path]
-		if found && currentVersion.Version != lockedDependency.Version {
-			log.Fatalln("version conflict for", currentVersion.Path)
-		}
+		checkForConflicts(lockedDependency)
 
 		FetchedDependencies[lockedDependency.Path] = lockedDependency
 
@@ -230,20 +227,11 @@ func installDependencies(dependencies []dependency.Dependency, recursive bool, t
 			TrickleDownDependencies[lockedDependency.Path] = lockedDependency
 		}
 
-		if !recursive {
-			continue
-		}
-
 		nextLevel = append(nextLevel, lockedDependency)
 	}
 
-	for _, dependency := range nextLevel {
-		dependencyPath := dependency.FullPath(gopath)
-
-		if _, err := os.Stat(path.Join(dependencyPath, "Cartridge")); err == nil {
-			fmt.Println("\nfetching dependencies for", dependency.Path)
-			install(dependencyPath, recursive, false, trickleDown, depth+1)
-		}
+	if recursive {
+		installNextLevel(nextLevel, depth+1)
 	}
 
 	return lockedDependencies, nil
@@ -255,4 +243,52 @@ func updateLockFile(writer io.Writer, dependencies []dependency.Dependency) erro
 	}
 
 	return nil
+}
+
+func installNextLevel(deps []dependency.Dependency, newDepth int) {
+	for _, dependency := range deps {
+		dependencyPath := dependency.FullPath(GOPATH)
+
+		if _, err := os.Stat(path.Join(dependencyPath, "Cartridge")); err == nil {
+			fmt.Println("\nfetching dependencies for", dependency.Path)
+			install(dependencyPath, true, false, false, newDepth)
+		}
+	}
+}
+
+func trickledDown(dep dependency.Dependency) dependency.Dependency {
+	trickled, found := TrickleDownDependencies[dep.Path]
+	if found {
+		return trickled
+	}
+
+	return dep
+}
+
+func checkForConflicts(lockedDependency dependency.Dependency) {
+	currentVersion, found := FetchedDependencies[lockedDependency.Path]
+	if found && currentVersion.Version != lockedDependency.Version {
+		fatal("version conflict for " + currentVersion.Path)
+	}
+}
+
+func bold(str string) string {
+	return "\x1b[1m" + str + "\x1b[0m"
+}
+
+func red(str string) string {
+	return "\x1b[31m" + str + "\x1b[0m"
+}
+
+func cyan(str string) string {
+	return "\x1b[36m" + str + "\x1b[0m"
+}
+
+func padding(size int) string {
+	return strings.Repeat(" ", size)
+}
+
+func fatal(message string) {
+	fmt.Println(red(message))
+	os.Exit(1)
 }

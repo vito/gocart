@@ -2,9 +2,9 @@ package command_runner
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"io/ioutil"
-	"fmt"
 	"os/exec"
 )
 
