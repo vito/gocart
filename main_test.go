@@ -457,6 +457,128 @@ var _ = Describe("install", func() {
 	})
 })
 
+var _ = FDescribe("check", func() {
+	gocartPath, err := cmdtest.Build("github.com/vito/gocart")
+	if err != nil {
+		panic(err)
+	}
+
+	// TODO: move to cmdtest
+	err = os.Chmod(gocartPath, 0755)
+	if err != nil {
+		panic(err)
+	}
+
+	var installCmd *exec.Cmd
+	var checkCmd *exec.Cmd
+	var gopath string
+
+	teeToStdout := func(w io.Writer) io.Writer {
+		return io.MultiWriter(w, os.Stdout)
+	}
+
+	installing := func() *cmdtest.Session {
+		sess, err := cmdtest.StartWrapped(installCmd, teeToStdout, teeToStdout)
+		Expect(err).ToNot(HaveOccurred())
+
+		return sess
+	}
+
+	checking := func() *cmdtest.Session {
+		sess, err := cmdtest.StartWrapped(checkCmd, teeToStdout, teeToStdout)
+		Expect(err).ToNot(HaveOccurred())
+
+		return sess
+	}
+
+	install := func() {
+		sess := installing()
+
+		Expect(sess).To(Say("OK"))
+		Expect(sess).To(ExitWith(0))
+	}
+
+	BeforeEach(func() {
+		installCmd = exec.Command(gocartPath, "install")
+
+		var err error
+
+		gopath, err = ioutil.TempDir(os.TempDir(), "fake_repo_GOPATH")
+		Expect(err).ToNot(HaveOccurred())
+
+		installCmd.Env = []string{
+			"GOPATH=" + gopath,
+			"GOROOT=" + os.Getenv("GOROOT"),
+			"PATH=" + os.Getenv("PATH"),
+			"PYTHONPATH=" + os.Getenv("PYTHONPATH"), // bzr
+		}
+
+		checkCmd = exec.Command(gocartPath, "check")
+		checkCmd.Env = installCmd.Env
+	})
+
+	itCorrectlyDetectsDirtyDependency := func(repo ...string) {
+		Context("when the dependency is in a dirty state", func() {
+			var repoPath string
+
+			BeforeEach(func() {
+				repoPath = path.Join(append([]string{gopath, "src"}, repo...)...)
+
+				file, err := os.Create(path.Join(repoPath, "butts"))
+				Ω(err).ShouldNot(HaveOccurred())
+
+				file.Close()
+			})
+
+			It("reports it as dirty", func() {
+				check := checking()
+				Expect(check).To(Say(repoPath))
+				Expect(check).To(ExitWith(1))
+			})
+		})
+
+		Context("when the repo is so fresh and so clean clean", func() {
+			It("exits 0", func() {
+				check := checking()
+				Expect(check).To(ExitWith(0))
+			})
+		})
+	}
+
+	Context("with a git dependency", func() {
+		BeforeEach(func() {
+			installCmd.Dir = fakeGitRepoPath
+			checkCmd.Dir = fakeGitRepoPath
+
+			install()
+		})
+
+		itCorrectlyDetectsDirtyDependency("github.com", "vito", "gocart")
+	})
+
+	Context("with a hg dependency", func() {
+		BeforeEach(func() {
+			installCmd.Dir = fakeHgRepoPath
+			checkCmd.Dir = fakeHgRepoPath
+
+			install()
+		})
+
+		itCorrectlyDetectsDirtyDependency("code.google.com", "p", "go.crypto", "ssh")
+	})
+
+	Context("with a bzr dependency", func() {
+		BeforeEach(func() {
+			installCmd.Dir = fakeBzrRepoPath
+			checkCmd.Dir = fakeBzrRepoPath
+
+			install()
+		})
+
+		itCorrectlyDetectsDirtyDependency("launchpad.net", "gocheck")
+	})
+})
+
 func gitRevision(path, rev string) *cmdtest.Session {
 	git := exec.Command("git", "rev-parse", rev)
 	git.Dir = path

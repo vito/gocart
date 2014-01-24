@@ -91,6 +91,11 @@ func main() {
 		return
 	}
 
+	if command == "check" {
+		check(".")
+		return
+	}
+
 	unknownCommand()
 }
 
@@ -134,6 +139,28 @@ func install(root string, recursive bool, aggregate bool, trickleDown bool, dept
 	}
 }
 
+func check(root string) {
+	requestedDependencies := loadFile(path.Join(root, CartridgeFile))
+	lockedDependencies := loadFile(path.Join(root, CartridgeLockFile))
+
+	dependencies := locker.GenerateLock(requestedDependencies, lockedDependencies)
+
+	dirtyDependencies := []dependency.Dependency{}
+	for _, dep := range dependencies {
+		if checkForDirtyState(dep) {
+			dirtyDependencies = append(dirtyDependencies, dep)
+		}
+	}
+
+	if len(dirtyDependencies) > 0 {
+		for _, dep := range dirtyDependencies {
+			fmt.Println(bold("dirty dependency:"), dep.FullPath(GOPATH))
+		}
+
+		os.Exit(1)
+	}
+}
+
 func help() {
 	fmt.Println(`gocart: a go package manager
 
@@ -153,6 +180,9 @@ Usage:
 
       -a: (aggregate) with -r, collect all recursive dependencies into the
           top level lockfile
+
+  'gocart check':
+    Check if any of the dependencies are in a modified/dirty state.
 
 Place your dependencies in a file called Cartridge with this format:
 
@@ -193,6 +223,31 @@ func loadFile(fileName string) []dependency.Dependency {
 	}
 
 	return dependencies
+}
+
+func checkForDirtyState(dep dependency.Dependency) bool {
+	repoPath := dep.FullPath(GOPATH)
+
+	repo, err := dependency_fetcher.NewRepository(repoPath)
+	if err != nil {
+		fatal(err.Error())
+	}
+
+	status := repo.StatusCommand()
+
+	status.Dir = repoPath
+
+	output, err := status.CombinedOutput()
+	if err != nil {
+		fatal(err.Error())
+	}
+
+	// Bazaar is bizarre
+	if string(output) == "working tree is out of date, run 'bzr update'\n" {
+		return false
+	}
+
+	return len(output) != 0
 }
 
 func installDependencies(dependencies []dependency.Dependency, recursive bool, trickleDown bool, depth int) []dependency.Dependency {

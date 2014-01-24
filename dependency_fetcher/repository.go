@@ -11,6 +11,7 @@ type Repository interface {
 	CheckoutCommand(version string) *exec.Cmd
 	UpdateCommand() *exec.Cmd
 	CurrentVersionCommand() *exec.Cmd
+	StatusCommand() *exec.Cmd
 }
 
 var UnknownRepositoryType = errors.New("unknown repository type")
@@ -49,6 +50,10 @@ func (repo *GitRepository) UpdateCommand() *exec.Cmd {
 	return exec.Command("git", "fetch")
 }
 
+func (repo *GitRepository) StatusCommand() *exec.Cmd {
+	return exec.Command("git", "status", "--porcelain")
+}
+
 type HgRepository struct{}
 
 func (repo *HgRepository) CheckoutCommand(version string) *exec.Cmd {
@@ -63,6 +68,10 @@ func (repo *HgRepository) UpdateCommand() *exec.Cmd {
 	return exec.Command("hg", "pull")
 }
 
+func (repo *HgRepository) StatusCommand() *exec.Cmd {
+	return exec.Command("hg", "status")
+}
+
 type BzrRepository struct{}
 
 func (repo *BzrRepository) CheckoutCommand(version string) *exec.Cmd {
@@ -75,6 +84,10 @@ func (repo *BzrRepository) CurrentVersionCommand() *exec.Cmd {
 
 func (repo *BzrRepository) UpdateCommand() *exec.Cmd {
 	return exec.Command("bzr", "pull")
+}
+
+func (repo *BzrRepository) StatusCommand() *exec.Cmd {
+	return exec.Command("bzr", "status")
 }
 
 func checkForDir(root, dir string, depth int) int {
