@@ -106,10 +106,7 @@ func install(root string, recursive bool, aggregate bool, trickleDown bool, dept
 
 	dependencies := locker.GenerateLock(requestedDependencies, lockedDependencies)
 
-	newLockedDependencies, err := installDependencies(dependencies, recursive, trickleDown, depth)
-	if err != nil {
-		fatal(err.Error())
-	}
+	newLockedDependencies := installDependencies(dependencies, recursive, trickleDown, depth)
 
 	file, err := os.Create(path.Join(root, "Cartridge.lock"))
 	if err != nil {
@@ -187,14 +184,12 @@ func loadFile(fileName string) []dependency.Dependency {
 	return dependencies
 }
 
-func installDependencies(dependencies []dependency.Dependency, recursive bool, trickleDown bool, depth int) ([]dependency.Dependency, error) {
+func installDependencies(dependencies []dependency.Dependency, recursive bool, trickleDown bool, depth int) []dependency.Dependency {
 	runner := command_runner.New()
-
-	lockedDependencies := []dependency.Dependency{}
 
 	fetcher, err := dependency_fetcher.New(runner)
 	if err != nil {
-		return []dependency.Dependency{}, err
+		fatal(err.Error())
 	}
 
 	maxWidth := 0
@@ -205,41 +200,48 @@ func installDependencies(dependencies []dependency.Dependency, recursive bool, t
 		}
 	}
 
-	nextLevel := []dependency.Dependency{}
+	lockedDependencies := []dependency.Dependency{}
 
 	for _, dep := range dependencies {
 		fmt.Println(bold(dep.Path) + padding(maxWidth-len(dep.Path)+2) + cyan(dep.Version))
 
-		dep = trickledDown(dep)
-
-		lockedDependency, err := fetcher.Fetch(dep)
-		if err != nil {
-			return []dependency.Dependency{}, err
-		}
-
-		checkForConflicts(lockedDependency)
-
-		FetchedDependencies[lockedDependency.Path] = lockedDependency
-
-		lockedDependencies = append(lockedDependencies, lockedDependency)
+		lockedDependency := processDependency(fetcher, dep)
 
 		if depth == 0 && trickleDown {
 			TrickleDownDependencies[lockedDependency.Path] = lockedDependency
 		}
 
-		nextLevel = append(nextLevel, lockedDependency)
+		lockedDependencies = append(lockedDependencies, lockedDependency)
 	}
 
 	if recursive {
-		installNextLevel(nextLevel, depth+1)
+		installNextLevel(lockedDependencies, depth+1)
 	}
 
-	return lockedDependencies, nil
+	return lockedDependencies
+}
+
+func processDependency(fetcher *dependency_fetcher.DependencyFetcher, dep dependency.Dependency) dependency.Dependency {
+	dep = trickledDown(dep)
+
+	lockedDependency, err := fetcher.Fetch(dep)
+	if err != nil {
+		fatal(err.Error())
+	}
+
+	checkForConflicts(lockedDependency)
+
+	FetchedDependencies[lockedDependency.Path] = lockedDependency
+
+	return lockedDependency
 }
 
 func updateLockFile(writer io.Writer, dependencies []dependency.Dependency) error {
 	for _, dependency := range dependencies {
-		writer.Write([]byte(fmt.Sprintf("%s\t%s\n", dependency.Path, dependency.Version)))
+		_, err := writer.Write([]byte(fmt.Sprintf("%s\t%s\n", dependency.Path, dependency.Version)))
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -289,6 +291,6 @@ func padding(size int) string {
 }
 
 func fatal(message string) {
-	fmt.Println(red(message))
+	fmt.Fprintln(os.Stderr, red(message))
 	os.Exit(1)
 }
