@@ -4,57 +4,94 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/vito/gocart/dependency"
 	"github.com/vito/gocart/dependency_fetcher"
 	"github.com/vito/gocart/locker"
 )
 
+type Reason interface {
+	Description() string
+}
+
+type VersionMismatch struct {
+	Expected string
+	Current  string
+}
+
+func (self VersionMismatch) Description() string {
+	return fmt.Sprintf("version mismatch:\n  want %s\n  have %s\n", red(self.Expected), green(self.Current))
+}
+
+type DirtyState struct {
+	Output string
+}
+
+func (self DirtyState) Description() string {
+	output := ""
+
+	for _, line := range strings.Split(strings.Trim(self.Output, " \n"), "\n") {
+		output = output + "  " + line + "\n"
+	}
+
+	return fmt.Sprintf("dirty state:\n%s", output)
+}
+
 func check(root string) {
 	dirtyDependencies := findDirtyDependencies(root)
 
 	if len(dirtyDependencies) > 0 {
-		for dep := range dirtyDependencies {
-			fmt.Println(bold("dirty dependency:"), dep)
+		count := 0
+
+		for path, reason := range dirtyDependencies {
+			fmt.Println(bold(path))
+			fmt.Println(reason.Description())
+
+			count++
 		}
 
 		os.Exit(1)
 	}
 }
 
-func findDirtyDependencies(root string) map[string]bool {
+func findDirtyDependencies(root string) map[string]Reason {
 	requestedDependencies := loadFile(path.Join(root, CartridgeFile))
 	lockedDependencies := loadFile(path.Join(root, CartridgeLockFile))
 
 	dependencies := locker.GenerateLock(requestedDependencies, lockedDependencies)
 
-	dirtyDependencies := make(map[string]bool)
+	dirtyDependencies := make(map[string]Reason)
 
 	for _, dep := range dependencies {
-		if checkForDirtyState(dep) {
-			dirtyDependencies[dep.FullPath(GOPATH)] = true
+		reason := checkForDirtyState(dep)
+
+		if reason != nil {
+			dirtyDependencies[dep.FullPath(GOPATH)] = reason
 		}
 
-		for dep, _ := range findDirtyDependencies(dep.FullPath(GOPATH)) {
-			dirtyDependencies[dep] = true
+		for dep, reason := range findDirtyDependencies(dep.FullPath(GOPATH)) {
+			dirtyDependencies[dep] = reason
 		}
 	}
 
 	return dirtyDependencies
 }
 
-func checkForDirtyState(dep dependency.Dependency) bool {
+func checkForDirtyState(dep dependency.Dependency) Reason {
 	repoPath := dep.FullPath(GOPATH)
 
 	if _, err := os.Stat(repoPath); os.IsNotExist(err) {
-		return false
+		return nil
 	}
 
 	currentVersion := findCurrentVersion(dep)
 
 	if currentVersion != dep.Version {
-		fmt.Println("mismatch:", dep.Path, "should be", dep.Version, "is", currentVersion)
-		return true
+		return VersionMismatch{
+			Expected: dep.Version,
+			Current:  currentVersion,
+		}
 	}
 
 	repo, err := dependency_fetcher.NewRepository(repoPath)
@@ -72,13 +109,14 @@ func checkForDirtyState(dep dependency.Dependency) bool {
 
 	// Bazaar is bizarre
 	if string(output) == "working tree is out of date, run 'bzr update'\n" {
-		return false
+		return nil
 	}
 
 	if len(output) != 0 {
-		fmt.Println("dirty state:", dep.Path)
-		return true
+		return DirtyState{
+			Output: string(output),
+		}
 	}
 
-	return false
+	return nil
 }
