@@ -102,7 +102,7 @@ func checkForDirtyState(dep dependency.Dependency) Reason {
 	status := repo.StatusCommand()
 	status.Dir = repoPath
 
-	output, err := status.CombinedOutput()
+	output, err := status.Output()
 	if err != nil {
 		fatal(err.Error())
 	}

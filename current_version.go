@@ -18,7 +18,7 @@ func findCurrentVersion(dep dependency.Dependency) string {
 	current := repo.CurrentVersionCommand()
 	current.Dir = repoPath
 
-	currentVersion, err := current.CombinedOutput()
+	currentVersion, err := current.Output()
 	if err != nil {
 		return ""
 	}
