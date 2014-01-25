@@ -541,21 +541,10 @@ var _ = Describe("check", func() {
 
 			repoPath = path.Join(gopath, "src", "github.com", "vito", "gocart")
 
-			file, err := os.Create(path.Join(repoPath, "butts"))
-			Ω(err).ShouldNot(HaveOccurred())
+			checkout := exec.Command("git", "checkout", "HEAD~1")
+			checkout.Dir = repoPath
 
-			file.Close()
-
-			add := exec.Command("git", "add", "butts")
-			add.Dir = repoPath
-
-			err = add.Run()
-			Ω(err).ShouldNot(HaveOccurred())
-
-			commit := exec.Command("git", "commit", "-m", "touch butts")
-			commit.Dir = repoPath
-
-			err = commit.Run()
+			err = checkout.Run()
 			Ω(err).ShouldNot(HaveOccurred())
 		})
 
