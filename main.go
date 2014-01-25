@@ -243,21 +243,16 @@ func checkForDirtyState(dep dependency.Dependency) bool {
 		return false
 	}
 
+	currentVersion := findCurrentVersion(dep)
+
+	if currentVersion != dep.Version {
+		fmt.Println("mismatch:", dep.Path, "should be", dep.Version, "is", currentVersion)
+		return true
+	}
+
 	repo, err := dependency_fetcher.NewRepository(repoPath)
 	if err != nil {
 		fatal(err.Error())
-	}
-
-	current := repo.CurrentVersionCommand()
-	current.Dir = repoPath
-
-	currentVersion, err := current.CombinedOutput()
-	if err != nil {
-		fatal(err.Error())
-	}
-
-	if strings.Trim(string(currentVersion), " \n") != dep.Version {
-		return true
 	}
 
 	status := repo.StatusCommand()
@@ -273,10 +268,20 @@ func checkForDirtyState(dep dependency.Dependency) bool {
 		return false
 	}
 
-	return len(output) != 0
+	if len(output) != 0 {
+		fmt.Println("dirty state:", dep.Path)
+		return true
+	}
+
+	return false
 }
 
-func installDependencies(dependencies []dependency.Dependency, recursive bool, trickleDown bool, depth int) []dependency.Dependency {
+func installDependencies(
+	dependencies []dependency.Dependency,
+	recursive bool,
+	trickleDown bool,
+	depth int,
+) []dependency.Dependency {
 	runner := command_runner.New()
 
 	fetcher, err := dependency_fetcher.New(runner)
@@ -313,8 +318,15 @@ func installDependencies(dependencies []dependency.Dependency, recursive bool, t
 	return lockedDependencies
 }
 
-func processDependency(fetcher *dependency_fetcher.DependencyFetcher, dep dependency.Dependency) dependency.Dependency {
+func processDependency(
+	fetcher *dependency_fetcher.DependencyFetcher,
+	dep dependency.Dependency,
+) dependency.Dependency {
 	dep = trickledDown(dep)
+
+	if findCurrentVersion(dep) == dep.Version {
+		return dep
+	}
 
 	lockedDependency, err := fetcher.Fetch(dep)
 	if err != nil {
@@ -326,6 +338,25 @@ func processDependency(fetcher *dependency_fetcher.DependencyFetcher, dep depend
 	FetchedDependencies[lockedDependency.Path] = lockedDependency
 
 	return lockedDependency
+}
+
+func findCurrentVersion(dep dependency.Dependency) string {
+	repoPath := dep.FullPath(GOPATH)
+
+	repo, err := dependency_fetcher.NewRepository(repoPath)
+	if err != nil {
+		fatal(err.Error())
+	}
+
+	current := repo.CurrentVersionCommand()
+	current.Dir = repoPath
+
+	currentVersion, err := current.CombinedOutput()
+	if err != nil {
+		fatal(err.Error())
+	}
+
+	return strings.Trim(string(currentVersion), "\n ")
 }
 
 func updateLockFile(writer io.Writer, dependencies []dependency.Dependency) error {
