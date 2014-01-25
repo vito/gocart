@@ -345,7 +345,7 @@ func findCurrentVersion(dep dependency.Dependency) string {
 
 	repo, err := dependency_fetcher.NewRepository(repoPath)
 	if err != nil {
-		fatal(err.Error())
+		return ""
 	}
 
 	current := repo.CurrentVersionCommand()
@@ -353,7 +353,7 @@ func findCurrentVersion(dep dependency.Dependency) string {
 
 	currentVersion, err := current.CombinedOutput()
 	if err != nil {
-		fatal(err.Error())
+		return ""
 	}
 
 	return strings.Trim(string(currentVersion), "\n ")
