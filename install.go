@@ -48,7 +48,7 @@ func install(root string, recursive bool, aggregate bool, trickleDown bool, dept
 	}
 
 	if depth == 0 {
-		fmt.Println("\x1b[32mOK\x1b[0m")
+		fmt.Println(green("OK"))
 	}
 }
 
