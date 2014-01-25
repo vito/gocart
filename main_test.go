@@ -30,108 +30,80 @@ var currentDirectory,
 	fakeUnlockedRepoWithRecursiveDependencies,
 	fakeUnlockedRepoWithRecursiveConflictingDependencies string
 
-func init() {
+var _ = BeforeEach(func() {
 	var err error
 
 	_, currentFile, _, _ := runtime.Caller(0)
 	currentDirectory = path.Dir(currentFile)
 
 	destTmpDir, err := ioutil.TempDir(os.TempDir(), "wtf")
-	if err != nil {
-		panic(err)
-	}
+	Ω(err).ShouldNot(HaveOccurred())
 
 	err = walkTheDinosaur(currentDirectory, destTmpDir)
-	if err != nil {
-		panic(err)
-	}
+	Ω(err).ShouldNot(HaveOccurred())
 
 	gocartDir := path.Join(destTmpDir, "gocart")
 
 	fakeDiverseRepoPath, err = filepath.Abs(
 		path.Join(gocartDir, "fixtures", "fake_diverse_repo"),
 	)
-	if err != nil {
-		panic(err)
-	}
+	Ω(err).ShouldNot(HaveOccurred())
 
 	fakeLockedGitRepoPath, err = filepath.Abs(
 		path.Join(gocartDir, "fixtures", "fake_git_repo_locked"),
 	)
-	if err != nil {
-		panic(err)
-	}
+	Ω(err).ShouldNot(HaveOccurred())
 
 	fakeLockedGitRepoWithNewDepPath, err = filepath.Abs(
 		path.Join(gocartDir, "fixtures", "fake_git_repo_locked_with_new_dep"),
 	)
-	if err != nil {
-		panic(err)
-	}
+	Ω(err).ShouldNot(HaveOccurred())
 
 	fakeLockedGitRepoWithRemovedDepPath, err = filepath.Abs(
 		path.Join(gocartDir, "fixtures", "fake_git_repo_locked_with_removed_dep"),
 	)
-	if err != nil {
-		panic(err)
-	}
+	Ω(err).ShouldNot(HaveOccurred())
 
 	fakeGitRepoPath, err = filepath.Abs(
 		path.Join(gocartDir, "fixtures", "fake_git_repo"),
 	)
-	if err != nil {
-		panic(err)
-	}
+	Ω(err).ShouldNot(HaveOccurred())
 
 	fakeGitRepoWithRevisionPath, err = filepath.Abs(
 		path.Join(gocartDir, "fixtures", "fake_git_repo_with_revision"),
 	)
-	if err != nil {
-		panic(err)
-	}
+	Ω(err).ShouldNot(HaveOccurred())
 
 	fakeBzrRepoPath, err = filepath.Abs(
 		path.Join(gocartDir, "fixtures", "fake_bzr_repo"),
 	)
-	if err != nil {
-		panic(err)
-	}
+	Ω(err).ShouldNot(HaveOccurred())
 
 	fakeBzrRepoWithRevisionPath, err = filepath.Abs(
 		path.Join(gocartDir, "fixtures", "fake_bzr_repo_with_revision"),
 	)
-	if err != nil {
-		panic(err)
-	}
+	Ω(err).ShouldNot(HaveOccurred())
 
 	fakeHgRepoPath, err = filepath.Abs(
 		path.Join(gocartDir, "fixtures", "fake_hg_repo"),
 	)
-	if err != nil {
-		panic(err)
-	}
+	Ω(err).ShouldNot(HaveOccurred())
 
 	fakeHgRepoWithRevisionPath, err = filepath.Abs(
 		path.Join(gocartDir, "fixtures", "fake_hg_repo_with_revision"),
 	)
-	if err != nil {
-		panic(err)
-	}
+	Ω(err).ShouldNot(HaveOccurred())
 
 	fakeUnlockedRepoWithRecursiveDependencies, err = filepath.Abs(
 		path.Join(gocartDir, "fixtures", "fake_recursive_repo"),
 	)
-	if err != nil {
-		panic(err)
-	}
+	Ω(err).ShouldNot(HaveOccurred())
 
 	fakeUnlockedRepoWithRecursiveConflictingDependencies, err = filepath.Abs(
 		path.Join(gocartDir, "fixtures", "fake_recursive_repo_with_conflicting_dependencies"),
 	)
-	if err != nil {
-		panic(err)
-	}
-}
+	Ω(err).ShouldNot(HaveOccurred())
+})
 
 var _ = Describe("install", func() {
 	gocartPath, err := cmdtest.Build("github.com/vito/gocart")
