@@ -85,15 +85,6 @@ func checkForDirtyState(dep dependency.Dependency) Reason {
 		return nil
 	}
 
-	currentVersion := findCurrentVersion(dep)
-
-	if currentVersion != dep.Version {
-		return VersionMismatch{
-			Expected: dep.Version,
-			Current:  currentVersion,
-		}
-	}
-
 	repo, err := dependency_fetcher.NewRepository(repoPath)
 	if err != nil {
 		fatal(err.Error())
@@ -115,6 +106,15 @@ func checkForDirtyState(dep dependency.Dependency) Reason {
 	if len(output) != 0 {
 		return DirtyState{
 			Output: string(output),
+		}
+	}
+
+	currentVersion := findCurrentVersion(dep)
+
+	if currentVersion != dep.Version {
+		return VersionMismatch{
+			Expected: dep.Version,
+			Current:  currentVersion,
 		}
 	}
 
