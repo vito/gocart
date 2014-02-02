@@ -67,7 +67,7 @@ func main() {
 	}
 
 	if command == "install" {
-		install(".", *recursive, 0)
+		install(".", *recursive)
 		return
 	}
 

@@ -26,8 +26,8 @@ func padding(size int) string {
 	return strings.Repeat(" ", size)
 }
 
-func fatal(message string) {
-	fmt.Fprintln(os.Stderr, red(message))
+func fatal(message interface{}) {
+	fmt.Fprintln(os.Stderr, message)
 	os.Exit(1)
 }
 

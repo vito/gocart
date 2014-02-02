@@ -16,7 +16,7 @@ import (
 	. "github.com/vito/cmdtest/matchers"
 
 	"github.com/vito/gocart/dependency"
-	"github.com/vito/gocart/dependency_reader"
+	"github.com/vito/gocart/set"
 )
 
 var currentDirectory,
@@ -226,29 +226,22 @@ var _ = Describe("install", func() {
 
 			install()
 
-			lockFilePath := path.Join(fakeDiverseRepoPath, "Cartridge.lock")
-
-			lockFile, err := os.Open(lockFilePath)
+			set, err := set.LoadFrom(installCmd.Dir)
 			Expect(err).ToNot(HaveOccurred())
-
-			reader := dependency_reader.New(lockFile)
-
-			dependencies, err := reader.ReadAll()
-			Expect(err).ToNot(HaveOccurred())
-
-			Expect(dependencies).To(HaveLen(2))
 
 			dependency0Version := currentGitRevision(path.Join(gopath, "src", "github.com", "vito", "gocart"))
 			dependency1Version := currentHgRevision(path.Join(gopath, "src", "code.google.com", "p", "go.crypto", "ssh"))
 
-			Expect(dependencies[0]).To(Equal(dependency.Dependency{
-				Path:    "github.com/vito/gocart",
-				Version: dependency0Version,
-			}))
-
-			Expect(dependencies[1]).To(Equal(dependency.Dependency{
-				Path:    "code.google.com/p/go.crypto/ssh",
-				Version: dependency1Version,
+			Expect(set.Dependencies).To(HaveLen(2))
+			Expect(set.Dependencies).To(Equal([]dependency.Dependency{
+				{
+					Path:    "github.com/vito/gocart",
+					Version: dependency0Version,
+				},
+				{
+					Path:    "code.google.com/p/go.crypto/ssh",
+					Version: dependency1Version,
+				},
 			}))
 		})
 	})
@@ -265,44 +258,39 @@ var _ = Describe("install", func() {
 		})
 
 		Context("when there are new dependencies in the Cartridge", func() {
-			It("adds them to Cartridge.lock", func() {
+			It("locks them down", func() {
 				installCmd.Dir = fakeLockedGitRepoWithNewDepPath
 
 				dependencyPath := path.Join(gopath, "src", "github.com", "onsi", "ginkgo")
 
 				install()
 
-				Expect(gitRevision(dependencyPath, "HEAD")).To(Say("cfd6b07da4e69326bbd6b7057bbb4693cb78577b"))
+				Expect(gitRevision(dependencyPath, "HEAD")).To(Say("334e06b31ec28f58e7f2df287d2bcf68f59af2b3"))
 
-				lockFilePath := path.Join(installCmd.Dir, "Cartridge.lock")
+				set, err := set.LoadFrom(installCmd.Dir)
+				Ω(err).ShouldNot(HaveOccurred())
 
-				lockFile, err := os.Open(lockFilePath)
-				Expect(err).ToNot(HaveOccurred())
-
-				reader := dependency_reader.New(lockFile)
-				dependencies, err := reader.ReadAll()
-				Expect(err).ToNot(HaveOccurred())
-
-				Expect(dependencies).To(HaveLen(2))
+				Expect(set.Dependencies).To(HaveLen(2))
+				Expect(set.Dependencies).To(ContainElement(
+					dependency.Dependency{
+						Path: "github.com/onsi/ginkgo",
+						// cfd6b07da4e69326bbd6b7057bbb4693cb78577b~1
+						Version: "334e06b31ec28f58e7f2df287d2bcf68f59af2b3",
+					},
+				))
 			})
 		})
 
 		Context("when there are dependencies removed from the Cartridge", func() {
-			It("removes them from Cartridge.lock", func() {
+			It("removes them from the lock", func() {
 				installCmd.Dir = fakeLockedGitRepoWithRemovedDepPath
 
 				install()
 
-				lockFilePath := path.Join(installCmd.Dir, "Cartridge.lock")
-
-				lockFile, err := os.Open(lockFilePath)
+				set, err := set.LoadFrom(installCmd.Dir)
 				Expect(err).ToNot(HaveOccurred())
 
-				reader := dependency_reader.New(lockFile)
-				dependencies, err := reader.ReadAll()
-				Expect(err).ToNot(HaveOccurred())
-
-				Expect(dependencies).To(Equal([]dependency.Dependency{
+				Expect(set.Dependencies).To(Equal([]dependency.Dependency{
 					{
 						Path:    "github.com/vito/gocart",
 						Version: "7c9d1a95d4b7979bc4180d4cb4aebfc036f276de",

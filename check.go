@@ -3,24 +3,19 @@ package main
 import (
 	"fmt"
 	"os"
-	"path"
 
 	"github.com/vito/gocart/command_runner"
 	"github.com/vito/gocart/dependency"
-	"github.com/vito/gocart/locker"
 	"github.com/vito/gocart/repository"
+	"github.com/vito/gocart/set"
 )
-
-type Reason interface {
-	Description() string
-}
 
 type VersionMismatch struct {
 	Expected string
 	Status   DependencyStatus
 }
 
-func (self VersionMismatch) Description() string {
+func (self VersionMismatch) Error() string {
 	want := indent(1, "want "+red(self.Expected))
 	have := indent(1, "have "+green(self.Status.CurrentVersion))
 	log := indent(1, self.Status.DeltaLog)
@@ -46,38 +41,45 @@ type DirtyState struct {
 	Output string
 }
 
-func (self DirtyState) Description() string {
+func (self DirtyState) Error() string {
 	return fmt.Sprintf("dirty state:\n%s", indent(1, self.Output))
 }
 
 func check(root string) {
-	dirty := checkDependencies(root, 0)
+	cartridge, err := set.LoadFrom(root)
+	if err != nil {
+		fatal(err)
+	}
+
+	dirty := checkDependencies(cartridge, 0)
 
 	if dirty {
 		os.Exit(1)
 	}
 }
 
-func checkDependencies(root string, depth int) bool {
-	requestedDependencies := loadFile(path.Join(root, CartridgeFile))
-	lockedDependencies := loadFile(path.Join(root, CartridgeLockFile))
-
-	dependencies := locker.GenerateLock(requestedDependencies, lockedDependencies)
-
+func checkDependencies(deps *set.Set, depth int) bool {
 	dirty := false
 
-	for _, dep := range dependencies {
-		reason := checkForDirtyState(dep)
-		if reason != nil {
+	for _, dep := range deps.Dependencies {
+		err := checkForDirtyState(dep)
+		if err != nil {
 			dirty = true
 
 			fmt.Println(indent(depth, bold(dep.Path)))
-			fmt.Println(indent(depth+1, reason.Description()))
+			fmt.Println(indent(depth+1, err.Error()))
 		} else {
 			fmt.Println(indent(depth, bold(dep.Path)), green("OK"))
 		}
 
-		if checkDependencies(dep.FullPath(GOPATH), depth+1) {
+		nextDeps, err := set.LoadFrom(dep.FullPath(GOPATH))
+		if err == set.NoCartridgeError {
+			continue
+		} else if err != nil {
+			fatal(err)
+		}
+
+		if checkDependencies(nextDeps, depth+1) {
 			dirty = true
 		}
 	}
@@ -85,7 +87,7 @@ func checkDependencies(root string, depth int) bool {
 	return dirty
 }
 
-func checkForDirtyState(dep dependency.Dependency) Reason {
+func checkForDirtyState(dep dependency.Dependency) error {
 	repoPath := dep.FullPath(GOPATH)
 
 	if _, err := os.Stat(repoPath); os.IsNotExist(err) {
@@ -94,12 +96,12 @@ func checkForDirtyState(dep dependency.Dependency) Reason {
 
 	repo, err := repository.New(repoPath, command_runner.New(false))
 	if err != nil {
-		fatal(err.Error())
+		fatal(err)
 	}
 
 	statusOut, err := repo.Status()
 	if err != nil {
-		fatal(err.Error())
+		fatal(err)
 	}
 
 	if len(statusOut) != 0 {

@@ -1,4 +1,4 @@
-package locker_test
+package set_test
 
 import (
 	. "github.com/onsi/ginkgo"
@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestLock_merger(t *testing.T) {
+func TestSet(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Locker Suite")
+	RunSpecs(t, "Set Suite")
 }
