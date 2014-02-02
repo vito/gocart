@@ -93,9 +93,6 @@ Usage:
       -r: (recurse) if each dependency has a Cartridge, recursively run
           gocart for it as well
 
-      -a: (aggregate) with -r, collect all recursive dependencies into the
-          top level lockfile
-
   'gocart check':
     Check if any of the dependencies are in a modified/dirty state.
 
