@@ -36,12 +36,6 @@ var showVersion = flag.Bool(
 	"show gocart version",
 )
 
-var aggregate = flag.Bool(
-	"a",
-	false,
-	"collect recursive dependencies into a single .lock file",
-)
-
 func main() {
 	flag.Parse()
 
@@ -73,7 +67,7 @@ func main() {
 	}
 
 	if command == "install" {
-		install(".", *recursive, *aggregate, 0)
+		install(".", *recursive, 0)
 		return
 	}
 

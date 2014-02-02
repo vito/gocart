@@ -348,28 +348,6 @@ var _ = Describe("install", func() {
 			Expect(sess).To(SayError("version mismatch"))
 			Expect(sess).ToNot(ExitWith(0))
 		})
-
-		Context("with -a (for aggregate)", func() {
-			BeforeEach(func() {
-				installCmd.Args = append([]string{installCmd.Args[0], "-a"}, installCmd.Args[1:]...)
-			})
-
-			It("should collect all the dependencies into a giant .lock file", func() {
-				installCmd.Dir = fakeUnlockedRepoWithRecursiveDependencies
-
-				install()
-
-				lockFilePath := path.Join(installCmd.Dir, "Cartridge.lock")
-				lockFile, err := os.Open(lockFilePath)
-				Expect(err).ToNot(HaveOccurred())
-
-				reader := dependency_reader.New(lockFile)
-				dependencies, err := reader.ReadAll()
-				Expect(err).ToNot(HaveOccurred())
-
-				Expect(dependencies).To(HaveLen(4))
-			})
-		})
 	})
 })
 

@@ -12,7 +12,7 @@ import (
 	"github.com/vito/gocart/locker"
 )
 
-func install(root string, recursive bool, aggregate bool, depth int) {
+func install(root string, recursive bool, depth int) {
 	if _, err := os.Stat(path.Join(root, CartridgeFile)); err != nil {
 		println("no Cartridge file!")
 		os.Exit(1)
@@ -26,23 +26,13 @@ func install(root string, recursive bool, aggregate bool, depth int) {
 
 	newLockedDependencies := installDependencies(dependencies, recursive, depth)
 
-	file, err := os.Create(path.Join(root, "Cartridge.lock"))
+	file, err := os.Create(path.Join(root, CartridgeLockFile))
 	if err != nil {
 		fatal(err.Error())
 	}
 	defer file.Close()
 
-	var dependenciesToBeWritten []dependency.Dependency
-
-	if aggregate {
-		for _, dep := range FetchedDependencies {
-			dependenciesToBeWritten = append(dependenciesToBeWritten, dep)
-		}
-	} else {
-		dependenciesToBeWritten = newLockedDependencies
-	}
-
-	err = updateLockFile(file, dependenciesToBeWritten)
+	err = updateLockFile(file, newLockedDependencies)
 	if err != nil {
 		fatal(err.Error())
 	}
@@ -75,17 +65,19 @@ func installDependencies(
 	lockedDependencies := []dependency.Dependency{}
 
 	for _, dep := range dependencies {
-		fmt.Println(indent(depth, bold(dep.Path) + padding(maxWidth-len(dep.Path)+2) + cyan(dep.Version)))
+		fmt.Println(indent(depth, bold(dep.Path)+padding(maxWidth-len(dep.Path)+2)+cyan(dep.Version)))
 
 		lockedDependency := processDependency(fetcher, dep)
+
+		FetchedDependencies[lockedDependency.Path] = lockedDependency
 
 		lockedDependencies = append(lockedDependencies, lockedDependency)
 
 		if recursive {
 			dependencyPath := lockedDependency.FullPath(GOPATH)
 
-			if _, err := os.Stat(path.Join(dependencyPath, "Cartridge")); err == nil {
-				install(dependencyPath, true, false, depth+1)
+			if _, err := os.Stat(path.Join(dependencyPath, CartridgeFile)); err == nil {
+				install(dependencyPath, true, depth+1)
 			}
 		}
 	}
@@ -100,7 +92,6 @@ func processDependency(
 	currentVersion := findCurrentVersion(dep)
 
 	if currentVersion == dep.Version {
-		FetchedDependencies[dep.Path] = dep
 		return dep
 	}
 
@@ -110,8 +101,6 @@ func processDependency(
 	if err != nil {
 		fatal(err.Error())
 	}
-
-	FetchedDependencies[lockedDependency.Path] = lockedDependency
 
 	return lockedDependency
 }
