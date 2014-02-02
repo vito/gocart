@@ -57,7 +57,7 @@ func installDependencies(
 	recursive bool,
 	depth int,
 ) []dependency.Dependency {
-	runner := command_runner.New()
+	runner := command_runner.New(false)
 
 	fetcher, err := dependency_fetcher.New(runner)
 	if err != nil {
@@ -142,7 +142,7 @@ func checkForConflicts(dep dependency.Dependency) {
 				Status:   *status,
 			}
 
-			fmt.Println(mismatch.Description())
+			fmt.Fprintln(os.Stderr, mismatch.Description())
 
 			os.Exit(1)
 		}

@@ -73,7 +73,7 @@ var _ = Describe("Dependency Fetcher", func() {
 
 			runner.WhenRunning(fake_command_runner.CommandSpec{
 				Path: gitPath,
-				Args: []string{"git", "rev-parse", "HEAD"},
+				Args: []string{"rev-parse", "HEAD"},
 			}, func(cmd *exec.Cmd) error {
 				cmd.Stdout.Write([]byte("some-sha\n"))
 				return nil

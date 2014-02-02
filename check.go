@@ -5,9 +5,10 @@ import (
 	"os"
 	"path"
 
+	"github.com/vito/gocart/command_runner"
 	"github.com/vito/gocart/dependency"
-	"github.com/vito/gocart/dependency_fetcher"
 	"github.com/vito/gocart/locker"
+	"github.com/vito/gocart/repository"
 )
 
 type Reason interface {
@@ -91,27 +92,19 @@ func checkForDirtyState(dep dependency.Dependency) Reason {
 		return nil
 	}
 
-	repo, err := dependency_fetcher.NewRepository(repoPath)
+	repo, err := repository.New(repoPath, command_runner.New(false))
 	if err != nil {
 		fatal(err.Error())
 	}
 
-	status := repo.StatusCommand()
-	status.Dir = repoPath
-
-	output, err := status.Output()
+	statusOut, err := repo.Status()
 	if err != nil {
 		fatal(err.Error())
 	}
 
-	// Bazaar is bizarre
-	if string(output) == "working tree is out of date, run 'bzr update'\n" {
-		return nil
-	}
-
-	if len(output) != 0 {
+	if len(statusOut) != 0 {
 		return DirtyState{
-			Output: string(output),
+			Output: statusOut,
 		}
 	}
 

@@ -1,4 +1,4 @@
-package command_runner_test
+package repository_test
 
 import (
 	. "github.com/onsi/ginkgo"
@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestCommandRunner(t *testing.T) {
+func TestRepository(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "CommandRunner Suite")
+	RunSpecs(t, "Repository Suite")
 }

@@ -1,7 +1,6 @@
 package command_runner_test
 
 import (
-	"bytes"
 	"os/exec"
 
 	. "github.com/onsi/ginkgo"
@@ -10,35 +9,32 @@ import (
 	"github.com/vito/gocart/command_runner"
 )
 
-var _ = Describe("Shell Command Runner", func() {
-	var runner *command_runner.ShellCommandRunner
-	var buffer *bytes.Buffer
+var _ = Describe("Running commands", func() {
+	It("runs the command and returns nil", func() {
+		runner := command_runner.New(false)
 
-	BeforeEach(func() {
-		runner = command_runner.New()
-		buffer = &bytes.Buffer{}
+		cmd := exec.Command("ls")
+		Expect(cmd.ProcessState).To(BeNil())
+
+		err := runner.Run(cmd)
+		Expect(err).ToNot(HaveOccurred())
+
+		Expect(cmd.ProcessState).ToNot(BeNil())
 	})
 
-	Describe("running commands", func() {
-		It("runs commands", func() {
-			cmd := exec.Command("echo", "hello")
-			cmd.Stdout = buffer
-			runner.Run(cmd)
-			Expect(buffer.String()).To(Equal("hello\n"))
-		})
+	Context("when the command fails", func() {
+		It("returns an error containing its output", func() {
+			runner := command_runner.New(false)
 
-		It("returns the errors from the command", func() {
-			cmd := exec.Command("adsfasdf")
-			err := runner.Run(cmd)
+			err := runner.Run(exec.Command(
+				"/bin/bash",
+				"-c", "echo hi out; echo hi err >/dev/stderr; exit 42",
+			))
+
 			Expect(err).To(HaveOccurred())
-		})
-
-		It("returns the command's stdout and stderr in the error", func() {
-			cmd := exec.Command("bash", "-c", "echo out; echo err 1>&2; exit 1")
-			err := runner.Run(cmd)
-			Expect(err.Error()).To(ContainSubstring("exit status 1"))
-			Expect(err.Error()).To(ContainSubstring("bash -c"))
-			Expect(err.Error()).To(ContainSubstring("\nout\nerr"))
+			Expect(err.Error()).To(ContainSubstring("hi out\n"))
+			Expect(err.Error()).To(ContainSubstring("hi err\n"))
+			Expect(err.Error()).To(ContainSubstring("exit status 42"))
 		})
 	})
 })

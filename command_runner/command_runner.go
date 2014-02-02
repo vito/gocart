@@ -4,59 +4,84 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
+	"log"
+	"os"
 	"os/exec"
 )
 
 type CommandRunner interface {
-	Run(cmd *exec.Cmd) error
+	Run(*exec.Cmd) error
 }
 
-type CommandError struct {
-	RunError error
+type RealCommandRunner struct {
+	debug bool
+}
+
+type CommandFailedError struct {
+	OriginalError error
 
 	Command *exec.Cmd
-	Output  []byte
+	Output []byte
 }
 
-func (e CommandError) Error() string {
+func (e CommandFailedError) Error() string {
 	return fmt.Sprintf(
-		"command %v failed with %s:\n%s",
-		e.Command.Args,
-		e.RunError,
+		"command failed: %s\nerror: %s\noutput:\n%s",
+		prettyCommand(e.Command),
+		e.OriginalError.Error(),
 		e.Output,
 	)
 }
 
-type ShellCommandRunner struct{}
-
-func New() *ShellCommandRunner {
-	return &ShellCommandRunner{}
+func New(debug bool) *RealCommandRunner {
+	return &RealCommandRunner{debug}
 }
 
-func (runner *ShellCommandRunner) Run(cmd *exec.Cmd) error {
+func (r *RealCommandRunner) Run(cmd *exec.Cmd) error {
+	if r.debug {
+		log.Printf("\x1b[40;36mexecuting: %s\x1b[0m\n", prettyCommand(cmd))
+		r.tee(cmd, os.Stderr)
+	}
+
 	output := new(bytes.Buffer)
 
-	if cmd.Stdout != nil && cmd.Stdout != ioutil.Discard {
-		cmd.Stdout = io.MultiWriter(output, cmd.Stdout)
-	} else {
-		cmd.Stdout = output
-	}
-
-	if cmd.Stderr != nil && cmd.Stderr != ioutil.Discard {
-		cmd.Stderr = io.MultiWriter(output, cmd.Stderr)
-	} else {
-		cmd.Stderr = output
-	}
+	r.tee(cmd, output)
 
 	err := cmd.Run()
+
+	if r.debug {
+		if err != nil {
+			log.Printf("\x1b[40;31mcommand failed (%s): %s\x1b[0m\n", prettyCommand(cmd), err)
+		} else {
+			log.Printf("\x1b[40;32mcommand succeeded (%s)\x1b[0m\n", prettyCommand(cmd))
+		}
+	}
+
 	if err != nil {
-		return CommandError{
-			Command:  cmd,
-			Output:   output.Bytes(),
-			RunError: err,
+		return CommandFailedError{
+			OriginalError: err,
+
+			Command: cmd,
+			Output: output.Bytes(),
 		}
 	}
 
 	return nil
+}
+func (r *RealCommandRunner) tee(cmd *exec.Cmd, dst io.Writer) {
+	if cmd.Stderr == nil {
+		cmd.Stderr = dst
+	} else if cmd.Stderr != nil {
+		cmd.Stderr = io.MultiWriter(cmd.Stderr, dst)
+	}
+
+	if cmd.Stdout == nil {
+		cmd.Stdout = dst
+	} else if cmd.Stdout != nil {
+		cmd.Stdout = io.MultiWriter(cmd.Stdout, dst)
+	}
+}
+
+func prettyCommand(cmd *exec.Cmd) string {
+	return fmt.Sprintf("%v %s %v", cmd.Env, cmd.Path, cmd.Args)
 }

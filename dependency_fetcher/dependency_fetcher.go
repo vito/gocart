@@ -1,20 +1,18 @@
 package dependency_fetcher
 
 import (
-	"bytes"
-	"io/ioutil"
 	"os"
 	"os/exec"
-	"strings"
 
 	"github.com/vito/gocart/command_runner"
 	"github.com/vito/gocart/dependency"
 	"github.com/vito/gocart/gopath"
+	"github.com/vito/gocart/repository"
 )
 
 type DependencyFetcher struct {
-	commandRunner command_runner.CommandRunner
-	gopath        string
+	runner command_runner.CommandRunner
+	gopath string
 }
 
 func New(runner command_runner.CommandRunner) (*DependencyFetcher, error) {
@@ -24,54 +22,40 @@ func New(runner command_runner.CommandRunner) (*DependencyFetcher, error) {
 	}
 
 	return &DependencyFetcher{
-		commandRunner: runner,
-		gopath:        gopath,
+		runner: runner,
+		gopath: gopath,
 	}, nil
 }
 
 func (f *DependencyFetcher) Fetch(dependency dependency.Dependency) (dependency.Dependency, error) {
 	cmd := exec.Command("go", "get", "-d", "-v", dependency.Path)
 
-	err := f.commandRunner.Run(cmd)
+	err := f.runner.Run(cmd)
 	if err != nil {
 		return dependency, err
 	}
 
-	repo, err := NewRepository(dependency.FullPath(f.gopath))
+	repo, err := repository.New(dependency.FullPath(f.gopath), f.runner)
 	if err != nil {
 		return dependency, err
 	}
 
-	cmd = repo.UpdateCommand()
-	cmd.Dir = dependency.FullPath(f.gopath)
-
-	err = f.commandRunner.Run(cmd)
+	err = repo.Update()
 	if err != nil {
 		return dependency, err
 	}
 
-	cmd = repo.CheckoutCommand(dependency.Version)
-	cmd.Dir = dependency.FullPath(f.gopath)
-
-	err = f.commandRunner.Run(cmd)
+	err = repo.Checkout(dependency.Version)
 	if err != nil {
 		return dependency, err
 	}
 
-	current := repo.CurrentVersionCommand()
-	current.Dir = dependency.FullPath(f.gopath)
-
-	outBuf := new(bytes.Buffer)
-
-	current.Stdout = outBuf
-	current.Stderr = ioutil.Discard
-
-	err = f.commandRunner.Run(current)
+	currentVersion, err := repo.CurrentVersion()
 	if err != nil {
 		return dependency, err
 	}
 
-	dependency.Version = strings.Trim(string(outBuf.Bytes()), "\n")
+	dependency.Version = currentVersion
 
 	return dependency, nil
 }

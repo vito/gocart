@@ -4,7 +4,8 @@ import (
 	"strings"
 
 	"github.com/vito/gocart/dependency"
-	"github.com/vito/gocart/dependency_fetcher"
+	"github.com/vito/gocart/command_runner"
+	"github.com/vito/gocart/repository"
 )
 
 type DependencyStatus struct {
@@ -18,26 +19,23 @@ type DependencyStatus struct {
 func findCurrentVersion(dep dependency.Dependency) string {
 	repoPath := dep.FullPath(GOPATH)
 
-	repo, err := dependency_fetcher.NewRepository(repoPath)
+	repo, err := repository.New(repoPath, command_runner.New(false))
 	if err != nil {
 		return ""
 	}
 
-	current := repo.CurrentVersionCommand()
-	current.Dir = repoPath
-
-	currentVersion, err := current.Output()
+	currentVersion, err := repo.CurrentVersion()
 	if err != nil {
 		return ""
 	}
 
-	return strings.Trim(string(currentVersion), "\n ")
+	return currentVersion
 }
 
 func getDependencyStatus(dep dependency.Dependency) *DependencyStatus {
 	repoPath := dep.FullPath(GOPATH)
 
-	repo, err := dependency_fetcher.NewRepository(repoPath)
+	repo, err := repository.New(repoPath, command_runner.New(false))
 	if err != nil {
 		return nil
 	}
@@ -51,15 +49,12 @@ func getDependencyStatus(dep dependency.Dependency) *DependencyStatus {
 		return status
 	}
 
-	logCmd := repo.LogCommand(dep.Version, status.CurrentVersion)
-	logCmd.Dir = repoPath
-
 	newer := true
 
-	output, err := logCmd.Output()
+	logOutput, err := repo.Log(dep.Version, status.CurrentVersion)
 
 	// git or hg with both refs will show empty if newer..older
-	if len(output) == 0 {
+	if len(logOutput) == 0 {
 		newer = false
 	}
 
@@ -69,15 +64,12 @@ func getDependencyStatus(dep dependency.Dependency) *DependencyStatus {
 	}
 
 	if newer {
-		status.DeltaLog = string(output)
+		status.DeltaLog = logOutput
 		status.Delta = len(strings.Split(status.DeltaLog, "\n")) - 1
 	} else {
-		logCmd := repo.LogCommand(status.CurrentVersion, dep.Version)
-		logCmd.Dir = repoPath
+		logOutput, _ := repo.Log(status.CurrentVersion, dep.Version)
 
-		output, _ := logCmd.Output()
-
-		status.DeltaLog = string(output)
+		status.DeltaLog = logOutput
 		status.Delta = -(len(strings.Split(status.DeltaLog, "\n")) - 1)
 	}
 

@@ -312,7 +312,7 @@ var _ = Describe("install", func() {
 		})
 	})
 
-	Context("when we are recursive when we are recursive when we are", func() {
+	Context("with -r", func() {
 		BeforeEach(func() {
 			installCmd.Args = append([]string{installCmd.Args[0], "-r"}, installCmd.Args[1:]...)
 		})
@@ -345,7 +345,7 @@ var _ = Describe("install", func() {
 			installCmd.Dir = fakeUnlockedRepoWithRecursiveConflictingDependencies
 
 			sess := installing()
-			Expect(sess).To(SayError("conflict"))
+			Expect(sess).To(SayError("version mismatch"))
 			Expect(sess).ToNot(ExitWith(0))
 		})
 
@@ -368,62 +368,6 @@ var _ = Describe("install", func() {
 				Expect(err).ToNot(HaveOccurred())
 
 				Expect(dependencies).To(HaveLen(4))
-			})
-		})
-
-		Context("with -t (for trickledown)", func() {
-			BeforeEach(func() {
-				installCmd.Args = append([]string{installCmd.Args[0], "-t"}, installCmd.Args[1:]...)
-			})
-
-			It("should enforce dependencies that are defined in the top level cartridge", func() {
-				installCmd.Dir = fakeUnlockedRepoWithRecursiveConflictingDependencies
-
-				install()
-
-				lockFilePath := path.Join(gopath, "src", "github.com", "vito", "gocart", "Cartridge.lock")
-				lockFile, err := os.Open(lockFilePath)
-				Expect(err).ToNot(HaveOccurred())
-
-				reader := dependency_reader.New(lockFile)
-				dependencies, err := reader.ReadAll()
-				Expect(err).ToNot(HaveOccurred())
-
-				Expect(dependencies).To(ContainElement(
-					dependency.Dependency{
-						Path:    "github.com/onsi/ginkgo",
-						Version: "ed2674365250adb1cae3038ee49a2d8d87a8e4c7",
-					},
-				))
-
-				Expect(dependencies).To(ContainElement(
-					dependency.Dependency{
-						Path:    "github.com/onsi/gomega",
-						Version: "af00a096625b2a4621cbe96590d2478c906acbd1",
-					},
-				))
-
-				Expect(dependencies).To(ContainElement(
-					dependency.Dependency{
-						Path:    "github.com/vito/cmdtest",
-						Version: "9193198ec4ce39c99cb25b64f94dea5b5b924e68",
-					},
-				))
-
-				Expect(gitRevision(
-					path.Join(gopath, "src", "github.com", "onsi", "ginkgo"),
-					"HEAD",
-				)).To(Say("ed2674365250adb1cae3038ee49a2d8d87a8e4c7"))
-
-				Expect(gitRevision(
-					path.Join(gopath, "src", "github.com", "onsi", "gomega"),
-					"HEAD",
-				)).To(Say("af00a096625b2a4621cbe96590d2478c906acbd1"))
-
-				Expect(gitRevision(
-					path.Join(gopath, "src", "github.com", "vito", "cmdtest"),
-					"HEAD",
-				)).To(Say("9193198ec4ce39c99cb25b64f94dea5b5b924e68"))
 			})
 		})
 	})

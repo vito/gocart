@@ -8,13 +8,9 @@ import (
 )
 
 type FakeCommandRunner struct {
-	executedCommands []*exec.Cmd
-	startedCommands  []*exec.Cmd
-	waitedCommands   []*exec.Cmd
-	killedCommands   []*exec.Cmd
+	executedCommands  []*exec.Cmd
 
 	commandCallbacks map[*CommandSpec]func(*exec.Cmd) error
-	waitingCallbacks map[*CommandSpec]func(*exec.Cmd) error
 
 	sync.RWMutex
 }
@@ -23,7 +19,7 @@ type CommandSpec struct {
 	Path  string
 	Args  []string
 	Env   []string
-	Stdin string
+	Dir   string
 }
 
 func (s CommandSpec) Matches(cmd *exec.Cmd) bool {
@@ -31,28 +27,16 @@ func (s CommandSpec) Matches(cmd *exec.Cmd) bool {
 		return false
 	}
 
-	if len(s.Args) > 0 && !reflect.DeepEqual(s.Args, cmd.Args) {
+	if s.Dir != "" && s.Dir != cmd.Dir {
+		return false
+	}
+
+	if len(s.Args) > 0 && !reflect.DeepEqual(s.Args, cmd.Args[1:]) {
 		return false
 	}
 
 	if len(s.Env) > 0 && !reflect.DeepEqual(s.Env, cmd.Env) {
 		return false
-	}
-
-	if s.Stdin != "" {
-		if cmd.Stdin == nil {
-			return false
-		}
-
-		in := make([]byte, len(s.Stdin))
-		_, err := cmd.Stdin.Read(in)
-		if err != nil {
-			return false
-		}
-
-		if string(in) != s.Stdin {
-			return false
-		}
 	}
 
 	return true
@@ -61,7 +45,6 @@ func (s CommandSpec) Matches(cmd *exec.Cmd) bool {
 func New() *FakeCommandRunner {
 	return &FakeCommandRunner{
 		commandCallbacks: make(map[*CommandSpec]func(*exec.Cmd) error),
-		waitingCallbacks: make(map[*CommandSpec]func(*exec.Cmd) error),
 	}
 }
 
