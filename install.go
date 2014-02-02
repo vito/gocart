@@ -12,7 +12,7 @@ import (
 	"github.com/vito/gocart/locker"
 )
 
-func install(root string, recursive bool, aggregate bool, trickleDown bool, depth int) {
+func install(root string, recursive bool, aggregate bool, depth int) {
 	if _, err := os.Stat(path.Join(root, CartridgeFile)); err != nil {
 		println("no Cartridge file!")
 		os.Exit(1)
@@ -24,7 +24,7 @@ func install(root string, recursive bool, aggregate bool, trickleDown bool, dept
 
 	dependencies := locker.GenerateLock(requestedDependencies, lockedDependencies)
 
-	newLockedDependencies := installDependencies(dependencies, recursive, trickleDown, depth)
+	newLockedDependencies := installDependencies(dependencies, recursive, depth)
 
 	file, err := os.Create(path.Join(root, "Cartridge.lock"))
 	if err != nil {
@@ -55,7 +55,6 @@ func install(root string, recursive bool, aggregate bool, trickleDown bool, dept
 func installDependencies(
 	dependencies []dependency.Dependency,
 	recursive bool,
-	trickleDown bool,
 	depth int,
 ) []dependency.Dependency {
 	runner := command_runner.New()
@@ -76,19 +75,19 @@ func installDependencies(
 	lockedDependencies := []dependency.Dependency{}
 
 	for _, dep := range dependencies {
-		fmt.Println(bold(dep.Path) + padding(maxWidth-len(dep.Path)+2) + cyan(dep.Version))
+		fmt.Println(indent(depth, bold(dep.Path) + padding(maxWidth-len(dep.Path)+2) + cyan(dep.Version)))
 
 		lockedDependency := processDependency(fetcher, dep)
 
-		if depth == 0 && trickleDown {
-			TrickleDownDependencies[lockedDependency.Path] = lockedDependency
-		}
-
 		lockedDependencies = append(lockedDependencies, lockedDependency)
-	}
 
-	if recursive {
-		installNextLevel(lockedDependencies, depth+1)
+		if recursive {
+			dependencyPath := lockedDependency.FullPath(GOPATH)
+
+			if _, err := os.Stat(path.Join(dependencyPath, "Cartridge")); err == nil {
+				install(dependencyPath, true, false, depth+1)
+			}
+		}
 	}
 
 	return lockedDependencies
@@ -98,18 +97,19 @@ func processDependency(
 	fetcher *dependency_fetcher.DependencyFetcher,
 	dep dependency.Dependency,
 ) dependency.Dependency {
-	dep = trickledDown(dep)
+	currentVersion := findCurrentVersion(dep)
 
-	if findCurrentVersion(dep) == dep.Version {
+	if currentVersion == dep.Version {
+		FetchedDependencies[dep.Path] = dep
 		return dep
 	}
+
+	checkForConflicts(dep)
 
 	lockedDependency, err := fetcher.Fetch(dep)
 	if err != nil {
 		fatal(err.Error())
 	}
-
-	checkForConflicts(lockedDependency)
 
 	FetchedDependencies[lockedDependency.Path] = lockedDependency
 
@@ -127,29 +127,24 @@ func updateLockFile(writer io.Writer, dependencies []dependency.Dependency) erro
 	return nil
 }
 
-func installNextLevel(deps []dependency.Dependency, newDepth int) {
-	for _, dependency := range deps {
-		dependencyPath := dependency.FullPath(GOPATH)
+func checkForConflicts(dep dependency.Dependency) {
+	_, found := FetchedDependencies[dep.Path]
+	if !found {
+		return
+	}
 
-		if _, err := os.Stat(path.Join(dependencyPath, "Cartridge")); err == nil {
-			fmt.Println("\nfetching dependencies for", dependency.Path)
-			install(dependencyPath, true, false, false, newDepth)
+	status := getDependencyStatus(dep)
+
+	if status != nil {
+		if !status.VersionMatches {
+			mismatch := VersionMismatch{
+				Expected: dep.Version,
+				Status:   *status,
+			}
+
+			fmt.Println(mismatch.Description())
+
+			os.Exit(1)
 		}
-	}
-}
-
-func trickledDown(dep dependency.Dependency) dependency.Dependency {
-	trickled, found := TrickleDownDependencies[dep.Path]
-	if found {
-		return trickled
-	}
-
-	return dep
-}
-
-func checkForConflicts(lockedDependency dependency.Dependency) {
-	currentVersion, found := FetchedDependencies[lockedDependency.Path]
-	if found && currentVersion.Version != lockedDependency.Version {
-		fatal("version conflict for " + currentVersion.Path)
 	}
 }

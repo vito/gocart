@@ -17,7 +17,6 @@ const CartridgeLockFile = "Cartridge.lock"
 var GOPATH string
 
 var FetchedDependencies = make(map[string]dependency.Dependency)
-var TrickleDownDependencies = make(map[string]dependency.Dependency)
 
 var recursive = flag.Bool(
 	"r",
@@ -35,12 +34,6 @@ var showVersion = flag.Bool(
 	"v",
 	false,
 	"show gocart version",
-)
-
-var trickleDown = flag.Bool(
-	"t",
-	false,
-	"trickle down dependencies into nested Cartridges",
 )
 
 var aggregate = flag.Bool(
@@ -80,7 +73,7 @@ func main() {
 	}
 
 	if command == "install" {
-		install(".", *recursive, *aggregate, *trickleDown, 0)
+		install(".", *recursive, *aggregate, 0)
 		return
 	}
 
@@ -105,9 +98,6 @@ Usage:
 
       -r: (recurse) if each dependency has a Cartridge, recursively run
           gocart for it as well
-
-      -t: (trickle down) with -r, override lower-level dependencies with
-          root dependencies
 
       -a: (aggregate) with -r, collect all recursive dependencies into the
           top level lockfile
