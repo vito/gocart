@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"strings"
 
 	"github.com/vito/gocart/dependency"
 	"github.com/vito/gocart/dependency_fetcher"
@@ -17,11 +16,29 @@ type Reason interface {
 
 type VersionMismatch struct {
 	Expected string
-	Current  string
+	Status   DependencyStatus
 }
 
 func (self VersionMismatch) Description() string {
-	return fmt.Sprintf("version mismatch:\n  want %s\n  have %s\n", red(self.Expected), green(self.Current))
+	want := indent(1, "want "+red(self.Expected))
+	have := indent(1, "have "+green(self.Status.CurrentVersion))
+	log := indent(1, self.Status.DeltaLog)
+
+	if self.Status.Delta > 0 {
+		have = have + " (" + bold(fmt.Sprintf("%d", self.Status.Delta)) + " ahead)"
+		have = have + "\n" + indent(1, "extra commits:\n"+log)
+	} else if self.Status.Delta == 0 {
+		have = have + " (? behind)"
+	} else {
+		have = have + " (" + bold(fmt.Sprintf("%d", -self.Status.Delta)) + " behind)"
+		have = have + "\n" + indent(1, "missing commits:\n"+log)
+	}
+
+	return fmt.Sprintf(
+		"version mismatch:\n%s\n%s\n",
+		want,
+		have,
+	)
 }
 
 type DirtyState struct {
@@ -29,53 +46,42 @@ type DirtyState struct {
 }
 
 func (self DirtyState) Description() string {
-	output := ""
-
-	for _, line := range strings.Split(strings.Trim(self.Output, " \n"), "\n") {
-		output = output + "  " + line + "\n"
-	}
-
-	return fmt.Sprintf("dirty state:\n%s", output)
+	return fmt.Sprintf("dirty state:\n%s", indent(1, self.Output))
 }
 
 func check(root string) {
-	dirtyDependencies := findDirtyDependencies(root)
+	dirty := checkDependencies(root, 0)
 
-	if len(dirtyDependencies) > 0 {
-		count := 0
-
-		for path, reason := range dirtyDependencies {
-			fmt.Println(bold(path))
-			fmt.Println(reason.Description())
-
-			count++
-		}
-
+	if dirty {
 		os.Exit(1)
 	}
 }
 
-func findDirtyDependencies(root string) map[string]Reason {
+func checkDependencies(root string, depth int) bool {
 	requestedDependencies := loadFile(path.Join(root, CartridgeFile))
 	lockedDependencies := loadFile(path.Join(root, CartridgeLockFile))
 
 	dependencies := locker.GenerateLock(requestedDependencies, lockedDependencies)
 
-	dirtyDependencies := make(map[string]Reason)
+	dirty := false
 
 	for _, dep := range dependencies {
 		reason := checkForDirtyState(dep)
-
 		if reason != nil {
-			dirtyDependencies[dep.FullPath(GOPATH)] = reason
+			dirty = true
+
+			fmt.Println(indent(depth, bold(dep.Path)))
+			fmt.Println(indent(depth+1, reason.Description()))
+		} else {
+			fmt.Println(indent(depth, bold(dep.Path)), green("OK"))
 		}
 
-		for dep, reason := range findDirtyDependencies(dep.FullPath(GOPATH)) {
-			dirtyDependencies[dep] = reason
+		if checkDependencies(dep.FullPath(GOPATH), depth+1) {
+			dirty = true
 		}
 	}
 
-	return dirtyDependencies
+	return dirty
 }
 
 func checkForDirtyState(dep dependency.Dependency) Reason {
@@ -109,12 +115,13 @@ func checkForDirtyState(dep dependency.Dependency) Reason {
 		}
 	}
 
-	currentVersion := findCurrentVersion(dep)
-
-	if currentVersion != dep.Version {
-		return VersionMismatch{
-			Expected: dep.Version,
-			Current:  currentVersion,
+	currentStatus := getDependencyStatus(dep)
+	if currentStatus != nil {
+		if !currentStatus.VersionMatches {
+			return VersionMismatch{
+				Expected: dep.Version,
+				Status:   *currentStatus,
+			}
 		}
 	}
 

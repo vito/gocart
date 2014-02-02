@@ -30,3 +30,13 @@ func fatal(message string) {
 	fmt.Fprintln(os.Stderr, red(message))
 	os.Exit(1)
 }
+
+func indent(level int, str string) string {
+	indented := ""
+
+	for _, line := range strings.Split(strings.TrimRight(str, " \n"), "\n") {
+		indented = indented + padding(level*2) + line + "\n"
+	}
+
+	return indented[0 : len(indented)-1]
+}

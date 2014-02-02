@@ -2,6 +2,7 @@ package dependency_fetcher
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"path"
@@ -12,6 +13,7 @@ type Repository interface {
 	UpdateCommand() *exec.Cmd
 	CurrentVersionCommand() *exec.Cmd
 	StatusCommand() *exec.Cmd
+	LogCommand(from, to string) *exec.Cmd
 }
 
 var UnknownRepositoryType = errors.New("unknown repository type")
@@ -54,6 +56,10 @@ func (repo *GitRepository) StatusCommand() *exec.Cmd {
 	return exec.Command("git", "status", "--porcelain")
 }
 
+func (repo *GitRepository) LogCommand(from, to string) *exec.Cmd {
+	return exec.Command("git", "log", "--oneline", fmt.Sprintf("%s..%s", from, to))
+}
+
 type HgRepository struct{}
 
 func (repo *HgRepository) CheckoutCommand(version string) *exec.Cmd {
@@ -72,6 +78,10 @@ func (repo *HgRepository) StatusCommand() *exec.Cmd {
 	return exec.Command("hg", "status")
 }
 
+func (repo *HgRepository) LogCommand(from, to string) *exec.Cmd {
+	return exec.Command("hg", "log", "--template", "{node}\n", "-r", fmt.Sprintf("%s::%s", from, to))
+}
+
 type BzrRepository struct{}
 
 func (repo *BzrRepository) CheckoutCommand(version string) *exec.Cmd {
@@ -88,6 +98,10 @@ func (repo *BzrRepository) UpdateCommand() *exec.Cmd {
 
 func (repo *BzrRepository) StatusCommand() *exec.Cmd {
 	return exec.Command("bzr", "status")
+}
+
+func (repo *BzrRepository) LogCommand(from, to string) *exec.Cmd {
+	return exec.Command("bzr", "log", "--line", "-r", fmt.Sprintf("%s..%s", from, to))
 }
 
 func checkForDir(root, dir string, depth int) int {

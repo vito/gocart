@@ -492,9 +492,11 @@ var _ = Describe("check", func() {
 	itCorrectlyDetectsDirtyDependency := func(repo ...string) {
 		Context("when the dependency is in a dirty state", func() {
 			var repoPath string
+			var repoImportPath string
 
 			BeforeEach(func() {
 				repoPath = path.Join(append([]string{gopath, "src"}, repo...)...)
+				repoImportPath = path.Join(repo...)
 
 				file, err := os.Create(path.Join(repoPath, "butts"))
 				Ω(err).ShouldNot(HaveOccurred())
@@ -504,7 +506,7 @@ var _ = Describe("check", func() {
 
 			It("reports it as dirty", func() {
 				check := checking()
-				Expect(check).To(Say(repoPath))
+				Expect(check).To(Say(repoImportPath))
 				Expect(check).To(ExitWith(1))
 			})
 		})
@@ -550,7 +552,8 @@ var _ = Describe("check", func() {
 
 		It("reports it as dirty", func() {
 			check := checking()
-			Expect(check).To(Say(repoPath))
+			Expect(check).To(Say("github.com/vito/gocart"))
+			Expect(check).To(Say(".*1.* behind"))
 			Expect(check).To(ExitWith(1))
 		})
 	})
