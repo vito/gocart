@@ -5,7 +5,7 @@ import (
 
 	"github.com/vito/gocart/command_runner"
 	"github.com/vito/gocart/dependency"
-	"github.com/vito/gocart/dependency_fetcher"
+	"github.com/vito/gocart/fetcher"
 	"github.com/vito/gocart/set"
 )
 
@@ -31,7 +31,7 @@ func install(root string, recursive bool) {
 func installDependencies(deps *set.Set, recursive bool, depth int) error {
 	runner := command_runner.New(false)
 
-	fetcher, err := dependency_fetcher.New(runner)
+	fetcher, err := fetcher.New(runner)
 	if err != nil {
 		return err
 	}
@@ -75,7 +75,7 @@ func installDependencies(deps *set.Set, recursive bool, depth int) error {
 }
 
 func processDependency(
-	fetcher *dependency_fetcher.DependencyFetcher,
+	fetcher *fetcher.Fetcher,
 	dep dependency.Dependency,
 ) (dependency.Dependency, error) {
 	currentVersion := findCurrentVersion(dep)

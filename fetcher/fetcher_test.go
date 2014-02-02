@@ -1,4 +1,4 @@
-package dependency_fetcher_test
+package fetcher_test
 
 import (
 	"os"
@@ -10,13 +10,13 @@ import (
 
 	"github.com/vito/gocart/command_runner/fake_command_runner"
 	dependency_package "github.com/vito/gocart/dependency"
-	"github.com/vito/gocart/dependency_fetcher"
+	. "github.com/vito/gocart/fetcher"
 	"github.com/vito/gocart/gopath"
 )
 
-var _ = Describe("Dependency Fetcher", func() {
+var _ = Describe("Fetcher", func() {
 	var dependency dependency_package.Dependency
-	var fetcher *dependency_fetcher.DependencyFetcher
+	var fetcher *Fetcher
 	var runner *fake_command_runner.FakeCommandRunner
 
 	BeforeEach(func() {
@@ -29,7 +29,7 @@ var _ = Describe("Dependency Fetcher", func() {
 
 		runner = fake_command_runner.New()
 
-		fetcher, err = dependency_fetcher.New(runner)
+		fetcher, err = New(runner)
 		Expect(err).ToNot(HaveOccurred())
 	})
 

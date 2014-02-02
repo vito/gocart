@@ -1,4 +1,4 @@
-package dependency_fetcher
+package fetcher
 
 import (
 	"os"
@@ -10,24 +10,24 @@ import (
 	"github.com/vito/gocart/repository"
 )
 
-type DependencyFetcher struct {
+type Fetcher struct {
 	runner command_runner.CommandRunner
 	gopath string
 }
 
-func New(runner command_runner.CommandRunner) (*DependencyFetcher, error) {
+func New(runner command_runner.CommandRunner) (*Fetcher, error) {
 	gopath, err := gopath.InstallationDirectory(os.Getenv("GOPATH"))
 	if err != nil {
 		return nil, err
 	}
 
-	return &DependencyFetcher{
+	return &Fetcher{
 		runner: runner,
 		gopath: gopath,
 	}, nil
 }
 
-func (f *DependencyFetcher) Fetch(dependency dependency.Dependency) (dependency.Dependency, error) {
+func (f *Fetcher) Fetch(dependency dependency.Dependency) (dependency.Dependency, error) {
 	cmd := exec.Command("go", "get", "-d", "-v", dependency.Path)
 
 	err := f.runner.Run(cmd)
