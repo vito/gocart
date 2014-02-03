@@ -68,6 +68,42 @@ var _ = Describe("Fetcher", func() {
 			Ω(dep.Version).Should(Equal("some-sha"))
 		})
 
+		Context("when the repo exists and is already on the correct version", func() {
+			BeforeEach(func() {
+				gopath, _ := gopath.InstallationDirectory(os.Getenv("GOPATH"))
+
+				err := os.MkdirAll(dependency.FullPath(gopath), 0755)
+				Ω(err).ShouldNot(HaveOccurred())
+
+				runner.WhenRunning(fake_command_runner.CommandSpec{
+					Path: exec.Command("git").Path,
+					Args: []string{"rev-parse", "HEAD"},
+				}, func(cmd *exec.Cmd) error {
+					cmd.Stdout.Write([]byte(dependency.Version + "\n"))
+					return nil
+				})
+			})
+
+			It("skips updating", func() {
+				_, err := fetcher.Fetch(dependency)
+				Expect(err).ToNot(HaveOccurred())
+
+				Ω(runner).ShouldNot(HaveExecutedSerially(
+					fake_command_runner.CommandSpec{
+						Path: exec.Command("git").Path,
+						Args: []string{"fetch"},
+					},
+				))
+
+				Ω(runner).ShouldNot(HaveExecutedSerially(
+					fake_command_runner.CommandSpec{
+						Path: exec.Command("git").Path,
+						Args: []string{"checkout", "v1.2"},
+					},
+				))
+			})
+		})
+
 		Context("when the dependency is bleeding-edge", func() {
 			Context("and the repository exists", func() {
 				BeforeEach(func() {
@@ -215,8 +251,16 @@ var _ = Describe("Fetcher", func() {
 					Args: []string{"rev-parse", "HEAD"},
 				}, func(cmd *exec.Cmd) error {
 					if count == 0 {
+						// initial check
+						cmd.Stdout.Write([]byte("xxx\n"))
+					} else if count == 1 {
+						// first version
+						cmd.Stdout.Write([]byte("some-sha\n"))
+					} else if count == 2 {
+						// second check
 						cmd.Stdout.Write([]byte("some-sha\n"))
 					} else {
+						// new version
 						cmd.Stdout.Write([]byte("some-other-sha\n"))
 					}
 

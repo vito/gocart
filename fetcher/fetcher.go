@@ -89,12 +89,7 @@ func (f *Fetcher) Fetch(dep dependency.Dependency) (dependency.Dependency, error
 	}
 
 	if lockDown {
-		err = repo.Update()
-		if err != nil {
-			return dependency.Dependency{}, err
-		}
-
-		err = repo.Checkout(dep.Version)
+		err := f.syncRepo(repo, dep.Version)
 		if err != nil {
 			return dependency.Dependency{}, err
 		}
@@ -121,4 +116,23 @@ func (f *Fetcher) Fetch(dep dependency.Dependency) (dependency.Dependency, error
 	}
 
 	return dep, nil
+}
+
+func (f *Fetcher) syncRepo(repo repository.Repository, version string) error {
+	currentVersion, err := repo.CurrentVersion()
+	if err != nil {
+		return err
+	}
+
+	if currentVersion == version {
+		// already up-to-date
+		return nil
+	}
+
+	err = repo.Update()
+	if err != nil {
+		return err
+	}
+
+	return repo.Checkout(version)
 }

@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/vito/gocart/command_runner"
-	"github.com/vito/gocart/dependency"
 	"github.com/vito/gocart/fetcher"
 	"github.com/vito/gocart/set"
 )
@@ -60,7 +59,7 @@ func installDependencies(fetcher *fetcher.Fetcher, deps *set.Set, recursive bool
 			),
 		)
 
-		lockedDependency, err := processDependency(fetcher, dep)
+		lockedDependency, err := fetcher.Fetch(dep)
 		if err != nil {
 			return err
 		}
@@ -85,20 +84,3 @@ func installDependencies(fetcher *fetcher.Fetcher, deps *set.Set, recursive bool
 	return nil
 }
 
-func processDependency(
-	fetcher *fetcher.Fetcher,
-	dep dependency.Dependency,
-) (dependency.Dependency, error) {
-	currentVersion := findCurrentVersion(dep)
-
-	if currentVersion == dep.Version {
-		return dep, nil
-	}
-
-	lockedDependency, err := fetcher.Fetch(dep)
-	if err != nil {
-		return dependency.Dependency{}, err
-	}
-
-	return lockedDependency, nil
-}
