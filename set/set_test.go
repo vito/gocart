@@ -169,6 +169,24 @@ github.com/onsi/ginkgo/foo	origin/faster
 				},
 			}))
 		})
+
+		It("does not fail if two dependencies look similar but are actually, like, not the same", func() {
+			newSet := &Set{}
+
+			err := newSet.UnmarshalText([]byte(`github.com/vito/gocart	origin/master
+github.com/onsi/ginkgobiloba	origin/blaster
+github.com/onsi/ginkgo	origin/faster
+`))
+			Ω(err).ShouldNot(HaveOccurred())
+
+			newSet = &Set{}
+
+			err = newSet.UnmarshalText([]byte(`github.com/vito/gocart	origin/master
+github.com/onsi/ginkgo	origin/blaster
+github.com/onsi/ginkgobiloba	origin/faster
+`))
+			Ω(err).ShouldNot(HaveOccurred())
+		})
 	})
 
 	Describe("WriteTo", func() {

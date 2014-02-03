@@ -149,11 +149,11 @@ func (s *Set) UnmarshalText(text []byte) error {
 
 		// check for dupes
 		for _, existing := range s.Dependencies {
-			if strings.HasPrefix(dep.Path, existing.Path) {
+			if strings.HasPrefix(dep.Path+"/", existing.Path+"/") {
 				return DuplicateDependencyError{existing, dep}
 			}
 
-			if strings.HasPrefix(existing.Path, dep.Path) {
+			if strings.HasPrefix(existing.Path+"/", dep.Path+"/") {
 				return DuplicateDependencyError{existing, dep}
 			}
 		}
