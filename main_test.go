@@ -28,7 +28,8 @@ var currentDirectory,
 	fakeHgRepoPath, fakeHgRepoWithRevisionPath,
 	fakeBzrRepoPath, fakeBzrRepoWithRevisionPath,
 	fakeUnlockedRepoWithRecursiveDependencies,
-	fakeUnlockedRepoWithRecursiveConflictingDependencies string
+	fakeUnlockedRepoWithRecursiveConflictingDependencies,
+	fakeUnlockedRepoWithTestDependencies string
 
 var _ = BeforeEach(func() {
 	var err error
@@ -101,6 +102,11 @@ var _ = BeforeEach(func() {
 
 	fakeUnlockedRepoWithRecursiveConflictingDependencies, err = filepath.Abs(
 		path.Join(gocartDir, "fixtures", "fake_recursive_repo_with_conflicting_dependencies"),
+	)
+	Ω(err).ShouldNot(HaveOccurred())
+
+	fakeUnlockedRepoWithTestDependencies, err = filepath.Abs(
+		path.Join(gocartDir, "fixtures", "fake_repo_with_test_tag"),
 	)
 	Ω(err).ShouldNot(HaveOccurred())
 })
@@ -335,6 +341,25 @@ var _ = Describe("install", func() {
 			sess := installing()
 			Expect(sess).To(SayError("version conflict"))
 			Expect(sess).ToNot(ExitWith(0))
+		})
+	})
+
+	Context("with -x", func() {
+		BeforeEach(func() {
+			installCmd.Args = append(
+				[]string{installCmd.Args[0], "-x", "test"},
+				installCmd.Args[1:]...,
+			)
+		})
+
+		It("excludes dependencies matching any of the given tags", func() {
+			installCmd.Dir = fakeUnlockedRepoWithTestDependencies
+
+			sess := installing()
+			Expect(sess).To(Say("github.com/vito/gocart"))
+			Expect(sess).To(Say("origin/master"))
+			Expect(sess).ToNot(Say("github.com/onsi/(ginkgo|gomega)"))
+			Expect(sess).To(ExitWith(0))
 		})
 	})
 })

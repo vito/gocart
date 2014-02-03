@@ -1,4 +1,10 @@
-# Testing
-github.com/onsi/ginkgo   origin/master
-github.com/onsi/gomega   origin/master
+# this is actually a test dependency, but to be able to
+# test that non-test dependencies are fetched recursively,
+# i need to leave the tag off of at least one thing.
+#
+# you shouldn't really have gocart in a Cartridge anyway, so
+# this shouldn't affect anything
 github.com/vito/cmdtest  origin/master
+
+github.com/onsi/ginkgo   origin/master test
+github.com/onsi/gomega   origin/master test

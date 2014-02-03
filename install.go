@@ -8,7 +8,7 @@ import (
 	"github.com/vito/gocart/set"
 )
 
-func install(root string, recursive bool) {
+func install(root string, recursive bool, exclude []string) {
 	cartridge, err := set.LoadFrom(root)
 	if err != nil {
 		fatal(err)
@@ -21,7 +21,7 @@ func install(root string, recursive bool) {
 		fatal(err)
 	}
 
-	err = installDependencies(fetcher, cartridge, recursive, 0)
+	err = installDependencies(fetcher, cartridge, recursive, exclude, 0)
 	if err != nil {
 		fatal(err)
 	}
@@ -34,7 +34,7 @@ func install(root string, recursive bool) {
 	fmt.Println(green("OK"))
 }
 
-func installDependencies(fetcher *fetcher.Fetcher, deps *set.Set, recursive bool, depth int) error {
+func installDependencies(fetcher *fetcher.Fetcher, deps *set.Set, recursive bool, exclude []string, depth int) error {
 	maxWidth := 0
 
 	for _, dep := range deps.Dependencies {
@@ -44,6 +44,10 @@ func installDependencies(fetcher *fetcher.Fetcher, deps *set.Set, recursive bool
 	}
 
 	for _, dep := range deps.Dependencies {
+		if tagsMatch(dep.Tags, exclude) {
+			continue
+		}
+
 		versionDisplay := ""
 
 		if dep.BleedingEdge {
@@ -74,7 +78,7 @@ func installDependencies(fetcher *fetcher.Fetcher, deps *set.Set, recursive bool
 				return err
 			}
 
-			err = installDependencies(fetcher, nextDeps, true, depth+1)
+			err = installDependencies(fetcher, nextDeps, true, []string{}, depth+1)
 			if err != nil {
 				return err
 			}
@@ -84,3 +88,14 @@ func installDependencies(fetcher *fetcher.Fetcher, deps *set.Set, recursive bool
 	return nil
 }
 
+func tagsMatch(as, bs []string) bool {
+	for _, atag := range as {
+		for _, btag := range bs {
+			if atag == btag {
+				return true
+			}
+		}
+	}
+
+	return false
+}

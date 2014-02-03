@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/vito/gocart/gopath"
 )
@@ -19,6 +20,12 @@ var recursive = flag.Bool(
 	"r",
 	false,
 	"recursively fetch dependencies and check for conflicts",
+)
+
+var exclude = flag.String(
+	"x",
+	"",
+	"exclude dependencies matching any of the (comma-separated) tags",
 )
 
 var showHelp = flag.Bool(
@@ -64,7 +71,7 @@ func main() {
 	}
 
 	if command == "install" {
-		install(".", *recursive)
+		install(".", *recursive, strings.Split(*exclude, ","))
 		return
 	}
 

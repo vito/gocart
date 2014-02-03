@@ -93,6 +93,23 @@ github.com/onsi/gomega	origin/faster # what the heck come after buzz
 			}))
 		})
 
+		It("parses the third field as comma-separated tags", func() {
+			newSet := &Set{}
+
+			err := newSet.UnmarshalText([]byte(
+				"github.com/vito/gocart origin/master test,development",
+			))
+			Ω(err).ShouldNot(HaveOccurred())
+
+			Ω(newSet.Dependencies).Should(Equal([]dependency.Dependency{
+				{
+					Path:    "github.com/vito/gocart",
+					Version: "origin/master",
+					Tags:    []string{"test", "development"},
+				},
+			}))
+		})
+
 		It("fails if a dependency is missing its version", func() {
 			newSet := &Set{}
 

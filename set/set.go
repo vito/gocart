@@ -131,6 +131,8 @@ func (s *Set) UnmarshalText(text []byte) error {
 				} else {
 					dep.Version = words.Text()
 				}
+			} else if count == 2 {
+				dep.Tags = strings.Split(words.Text(), ",")
 			}
 
 			count++

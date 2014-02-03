@@ -8,6 +8,7 @@ import (
 type Dependency struct {
 	Path         string
 	Version      string
+	Tags         []string
 	BleedingEdge bool
 }
 
