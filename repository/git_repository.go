@@ -1,10 +1,10 @@
 package repository
 
 import (
-	"fmt"
-	"strings"
 	"bytes"
+	"fmt"
 	"os/exec"
+	"strings"
 
 	"github.com/vito/gocart/command_runner"
 )

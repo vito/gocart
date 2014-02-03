@@ -3,8 +3,8 @@ package main
 import (
 	"strings"
 
-	"github.com/vito/gocart/dependency"
 	"github.com/vito/gocart/command_runner"
+	"github.com/vito/gocart/dependency"
 	"github.com/vito/gocart/repository"
 )
 

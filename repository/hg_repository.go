@@ -1,9 +1,9 @@
 package repository
 
 import (
-	"strings"
 	"bytes"
 	"os/exec"
+	"strings"
 
 	"github.com/vito/gocart/command_runner"
 )
@@ -40,7 +40,7 @@ func (r *HgRepository) Log(from, to string) (string, error) {
 	return r.cmdOutput(r.hgCmd(
 		"log",
 		"--template", "{rev}:{node}: {desc|firstline}\n",
-		"-r", from + "::" + to,
+		"-r", from+"::"+to,
 	))
 }
 

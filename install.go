@@ -15,7 +15,14 @@ func install(root string, recursive bool) {
 		fatal(err)
 	}
 
-	err = installDependencies(cartridge, recursive, 0)
+	runner := command_runner.New(false)
+
+	fetcher, err := fetcher.New(runner)
+	if err != nil {
+		fatal(err)
+	}
+
+	err = installDependencies(fetcher, cartridge, recursive, 0)
 	if err != nil {
 		fatal(err)
 	}
@@ -28,14 +35,7 @@ func install(root string, recursive bool) {
 	fmt.Println(green("OK"))
 }
 
-func installDependencies(deps *set.Set, recursive bool, depth int) error {
-	runner := command_runner.New(false)
-
-	fetcher, err := fetcher.New(runner)
-	if err != nil {
-		return err
-	}
-
+func installDependencies(fetcher *fetcher.Fetcher, deps *set.Set, recursive bool, depth int) error {
 	maxWidth := 0
 
 	for _, dep := range deps.Dependencies {
@@ -45,14 +45,25 @@ func installDependencies(deps *set.Set, recursive bool, depth int) error {
 	}
 
 	for _, dep := range deps.Dependencies {
-		fmt.Println(indent(depth, bold(dep.Path)+padding(maxWidth-len(dep.Path)+2)+cyan(dep.Version)))
+		versionDisplay := ""
+
+		if dep.BleedingEdge {
+			versionDisplay = "*"
+		} else {
+			versionDisplay = dep.Version
+		}
+
+		fmt.Println(
+			indent(
+				depth,
+				bold(dep.Path)+padding(maxWidth-len(dep.Path)+2)+cyan(versionDisplay),
+			),
+		)
 
 		lockedDependency, err := processDependency(fetcher, dep)
 		if err != nil {
 			return err
 		}
-
-		FetchedDependencies[lockedDependency.Path] = lockedDependency
 
 		deps.Replace(lockedDependency)
 
@@ -64,7 +75,7 @@ func installDependencies(deps *set.Set, recursive bool, depth int) error {
 				return err
 			}
 
-			err = installDependencies(nextDeps, true, depth+1)
+			err = installDependencies(fetcher, nextDeps, true, depth+1)
 			if err != nil {
 				return err
 			}
@@ -84,35 +95,10 @@ func processDependency(
 		return dep, nil
 	}
 
-	if err := checkForConflicts(dep); err != nil {
-		return dependency.Dependency{}, err
-	}
-
 	lockedDependency, err := fetcher.Fetch(dep)
 	if err != nil {
 		return dependency.Dependency{}, err
 	}
 
 	return lockedDependency, nil
-}
-
-func checkForConflicts(dep dependency.Dependency) error {
-	_, found := FetchedDependencies[dep.Path]
-	if !found {
-		return nil
-	}
-
-	status := getDependencyStatus(dep)
-	if status == nil {
-		return nil
-	}
-
-	if !status.VersionMatches {
-		return VersionMismatch{
-			Expected: dep.Version,
-			Status:   *status,
-		}
-	}
-
-	return nil
 }

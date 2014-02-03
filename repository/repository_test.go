@@ -8,9 +8,9 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/vito/gocart/repository"
 	"github.com/vito/gocart/command_runner"
 	"github.com/vito/gocart/command_runner/fake_command_runner"
+	"github.com/vito/gocart/repository"
 )
 
 var _ = Describe("A Repository", func() {

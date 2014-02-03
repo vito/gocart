@@ -79,6 +79,20 @@ github.com/onsi/gomega	origin/faster # what the heck come after buzz
 			}))
 		})
 
+		It("parses an asterisk version as bleeding-edge", func() {
+			newSet := &Set{}
+
+			err := newSet.UnmarshalText([]byte("github.com/vito/gocart *"))
+			Ω(err).ShouldNot(HaveOccurred())
+
+			Ω(newSet.Dependencies).Should(Equal([]dependency.Dependency{
+				{
+					Path:         "github.com/vito/gocart",
+					BleedingEdge: true,
+				},
+			}))
+		})
+
 		It("fails if a dependency is missing its version", func() {
 			newSet := &Set{}
 
@@ -94,8 +108,14 @@ github.com/onsi/ginkgo	origin/blaster
 github.com/onsi/ginkgo	origin/faster
 `))
 			Ω(err).Should(Equal(DuplicateDependencyError{
-				dependency.Dependency{"github.com/onsi/ginkgo", "origin/blaster"},
-				dependency.Dependency{"github.com/onsi/ginkgo", "origin/faster"},
+				dependency.Dependency{
+					Path:    "github.com/onsi/ginkgo",
+					Version: "origin/blaster",
+				},
+				dependency.Dependency{
+					Path:    "github.com/onsi/ginkgo",
+					Version: "origin/faster",
+				},
 			}))
 
 			newSet = &Set{}
@@ -105,8 +125,14 @@ github.com/onsi/ginkgo/foo	origin/blaster
 github.com/onsi/ginkgo	origin/faster
 `))
 			Ω(err).Should(Equal(DuplicateDependencyError{
-				dependency.Dependency{"github.com/onsi/ginkgo/foo", "origin/blaster"},
-				dependency.Dependency{"github.com/onsi/ginkgo", "origin/faster"},
+				dependency.Dependency{
+					Path:    "github.com/onsi/ginkgo/foo",
+					Version: "origin/blaster",
+				},
+				dependency.Dependency{
+					Path:    "github.com/onsi/ginkgo",
+					Version: "origin/faster",
+				},
 			}))
 
 			newSet = &Set{}
@@ -116,8 +142,14 @@ github.com/onsi/ginkgo	origin/blaster
 github.com/onsi/ginkgo/foo	origin/faster
 `))
 			Ω(err).Should(Equal(DuplicateDependencyError{
-				dependency.Dependency{"github.com/onsi/ginkgo", "origin/blaster"},
-				dependency.Dependency{"github.com/onsi/ginkgo/foo", "origin/faster"},
+				dependency.Dependency{
+					Path:    "github.com/onsi/ginkgo",
+					Version: "origin/blaster",
+				},
+				dependency.Dependency{
+					Path:    "github.com/onsi/ginkgo/foo",
+					Version: "origin/faster",
+				},
 			}))
 		})
 	})
@@ -262,6 +294,39 @@ github.com/onsi/ginkgo/foo	origin/faster
 							},
 						},
 					}))
+				})
+
+				Context("with bleeding-edge dependencies in Cartridge", func() {
+					BeforeEach(func() {
+						file, err := os.Create(cartridgeFilePath)
+						Ω(err).ShouldNot(HaveOccurred())
+
+						defer file.Close()
+
+						_, err = file.Write([]byte(`github.com/vito/gocart *
+github.com/onsi/ginkgo origin/blaster
+`))
+						Ω(err).ShouldNot(HaveOccurred())
+					})
+
+					It("sets BleedingEdge on the locked dependency", func() {
+						set, err := LoadFrom(projectDir)
+						Ω(err).ShouldNot(HaveOccurred())
+
+						Ω(set).Should(Equal(&Set{
+							[]dependency.Dependency{
+								{
+									Path:         "github.com/vito/gocart",
+									Version:      "some-sha",
+									BleedingEdge: true,
+								},
+								{
+									Path:    "github.com/onsi/ginkgo",
+									Version: "origin/blaster",
+								},
+							},
+						}))
+					})
 				})
 			})
 		})

@@ -6,8 +6,9 @@ import (
 )
 
 type Dependency struct {
-	Path    string
-	Version string
+	Path         string
+	Version      string
+	BleedingEdge bool
 }
 
 func (d Dependency) String() string {

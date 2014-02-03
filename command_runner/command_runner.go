@@ -21,7 +21,7 @@ type CommandFailedError struct {
 	OriginalError error
 
 	Command *exec.Cmd
-	Output []byte
+	Output  []byte
 }
 
 func (e CommandFailedError) Error() string {
@@ -62,7 +62,7 @@ func (r *RealCommandRunner) Run(cmd *exec.Cmd) error {
 			OriginalError: err,
 
 			Command: cmd,
-			Output: output.Bytes(),
+			Output:  output.Bytes(),
 		}
 	}
 

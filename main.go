@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/vito/gocart/dependency"
 	"github.com/vito/gocart/gopath"
 )
 
@@ -15,8 +14,6 @@ const CartridgeFile = "Cartridge"
 const CartridgeLockFile = "Cartridge.lock"
 
 var GOPATH string
-
-var FetchedDependencies = make(map[string]dependency.Dependency)
 
 var recursive = flag.Bool(
 	"r",

@@ -8,7 +8,7 @@ import (
 )
 
 type FakeCommandRunner struct {
-	executedCommands  []*exec.Cmd
+	executedCommands []*exec.Cmd
 
 	commandCallbacks map[*CommandSpec]func(*exec.Cmd) error
 
@@ -16,10 +16,10 @@ type FakeCommandRunner struct {
 }
 
 type CommandSpec struct {
-	Path  string
-	Args  []string
-	Env   []string
-	Dir   string
+	Path string
+	Args []string
+	Env  []string
+	Dir  string
 }
 
 func (s CommandSpec) Matches(cmd *exec.Cmd) bool {

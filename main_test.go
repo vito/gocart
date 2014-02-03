@@ -333,7 +333,7 @@ var _ = Describe("install", func() {
 			installCmd.Dir = fakeUnlockedRepoWithRecursiveConflictingDependencies
 
 			sess := installing()
-			Expect(sess).To(SayError("version mismatch"))
+			Expect(sess).To(SayError("version conflict"))
 			Expect(sess).ToNot(ExitWith(0))
 		})
 	})

@@ -126,7 +126,11 @@ func (s *Set) UnmarshalText(text []byte) error {
 			if count == 0 {
 				dep.Path = words.Text()
 			} else if count == 1 {
-				dep.Version = words.Text()
+				if words.Text() == "*" {
+					dep.BleedingEdge = true
+				} else {
+					dep.Version = words.Text()
+				}
 			}
 
 			count++
@@ -161,7 +165,7 @@ func (s *Set) UnmarshalText(text []byte) error {
 func (s *Set) Replace(ldep dependency.Dependency) {
 	for i, dep := range s.Dependencies {
 		if dep.Path == ldep.Path {
-			s.Dependencies[i] = ldep
+			s.Dependencies[i].Version = ldep.Version
 		}
 	}
 }
