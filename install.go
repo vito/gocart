@@ -78,7 +78,7 @@ func installDependencies(fetcher *fetcher.Fetcher, deps *set.Set, recursive bool
 				return err
 			}
 
-			err = installDependencies(fetcher, nextDeps, true, []string{}, depth+1)
+			err = installDependencies(fetcher, nextDeps, true, []string{"test"}, depth+1)
 			if err != nil {
 				return err
 			}

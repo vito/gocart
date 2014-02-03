@@ -316,23 +316,17 @@ var _ = Describe("install", func() {
 
 			sess := installing()
 			Expect(sess).To(Say("github.com/vito/gocart"))
-			Expect(sess).To(Say("origin/master"))
-			Expect(sess).To(Say("github.com/onsi/ginkgo"))
-			Expect(sess).To(Say("9019392d862065b9f2c4461623bd0d1abfd5f435"))
-			Expect(sess).To(Say("github.com/onsi/gomega"))
-			Expect(sess).To(Say("82aceb33958ceb2758ee32204e02e681d483423c"))
+			Expect(sess).To(Say("39ada75afb9b654b4621822e707258812bff34ac"))
+			Expect(sess).To(Say("github.com/vito/cmdtest"))
+			Expect(sess).To(Say("4b86f8c2259c55e86e4b971cd7dc5dfb03e41b80"))
+			Expect(sess).ToNot(Say("github.com/onsi/(ginkgo|gomega)"))
 			Expect(sess).To(Say("OK"))
 			Expect(sess).To(ExitWith(0))
 
 			Expect(gitRevision(
-				path.Join(gopath, "src", "github.com", "onsi", "ginkgo"),
+				path.Join(gopath, "src", "github.com", "vito", "cmdtest"),
 				"HEAD",
-			)).To(Say("9019392d862065b9f2c4461623bd0d1abfd5f435"))
-
-			Expect(gitRevision(
-				path.Join(gopath, "src", "github.com", "onsi", "gomega"),
-				"HEAD",
-			)).To(Say("82aceb33958ceb2758ee32204e02e681d483423c"))
+			)).To(Say("4b86f8c2259c55e86e4b971cd7dc5dfb03e41b80"))
 		})
 
 		It("checks for conflicting dependencies (different SHAs)", func() {
@@ -503,7 +497,7 @@ var _ = Describe("check", func() {
 			install()
 		})
 
-		itCorrectlyDetectsDirtyDependency("github.com", "onsi", "ginkgo")
+		itCorrectlyDetectsDirtyDependency("github.com", "vito", "cmdtest")
 	})
 
 	Context("with a git dependency", func() {
